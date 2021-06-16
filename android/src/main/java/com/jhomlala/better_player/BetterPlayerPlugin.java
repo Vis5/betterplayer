@@ -30,6 +30,15 @@ import io.flutter.view.TextureRegistry;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.app.PendingIntent;
+import java.util.ArrayList;
+import android.app.RemoteAction;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.drawable.Icon;
+import androidx.media.session.MediaButtonReceiver;
+import android.content.BroadcastReceiver;
+
 /**
  * Android platform implementation of the VideoPlayerPlugin.
  */
@@ -96,6 +105,10 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
     private static final String DISPOSE_METHOD = "dispose";
     private static final String PRE_CACHE_METHOD = "preCache";
     private static final String STOP_PRE_CACHE_METHOD = "stopPreCache";
+
+    /** Intent extra for media controls from Picture-in-Picture mode. */
+    private static final String ACTION_MEDIA_CONTROL = "media_control";
+    private static final String EXTRA_CONTROL_TYPE = "control_type";
 
     private final LongSparseArray<BetterPlayer> videoPlayers = new LongSparseArray<>();
     private final LongSparseArray<Map<String, Object>> dataSources = new LongSparseArray<>();
@@ -454,13 +467,68 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                 .hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
     }
 
+    private final PictureInPictureParams.Builder mPictureInPictureParamsBuilder = new PictureInPictureParams.Builder();
+    private boolean pipPaused = true;
+
     private void enablePictureInPicture(BetterPlayer player) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            player.setupMediaSession(flutterState.applicationContext, true);
-            activity.enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+            // player.setupMediaSession(flutterState.applicationContext, true);
+            pipPaused = true;
+            updatePipButton(player, 0, true);
+
             startPictureInPictureListenerTimer(player);
             player.onPictureInPictureStatusChanged(true);
+
+            BroadcastReceiver mReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (intent == null
+                            || !ACTION_MEDIA_CONTROL.equals(intent.getAction())) {
+                        return;
+                    }
+
+                    final int controlType = intent.getIntExtra(EXTRA_CONTROL_TYPE, 0);
+                    if (pipPaused) {
+                        setupNotification(player);
+                        player.play();
+                        pipPaused = false;
+                        updatePipButton(player, 1, false);
+                    } else {
+                        player.pause();
+                        pipPaused = true;
+                        updatePipButton(player, 0, false);
+                    }
+                }
+            };
+            flutterState.applicationContext.registerReceiver(mReceiver, new IntentFilter(ACTION_MEDIA_CONTROL));
         }
+    }
+
+    private void updatePipButton(BetterPlayer player, int pp, boolean first) {
+        final ArrayList<RemoteAction> actions = new ArrayList<>();
+        final PendingIntent intent = PendingIntent.getBroadcast(
+                flutterState.applicationContext,
+                pp,
+                new Intent(ACTION_MEDIA_CONTROL).putExtra(EXTRA_CONTROL_TYPE, pp),
+                0);
+        final Icon iconPlay = Icon.createWithResource(activity, R.drawable.ic_play_player);
+        final Icon iconPause = Icon.createWithResource(activity, R.drawable.ic_pause_player);
+        if (pipPaused) {
+            actions.add(new RemoteAction(iconPlay, "play", "play", intent));
+        } else {
+            actions.add(new RemoteAction(iconPause, "pause", "pause", intent));
+        }
+
+        if (first) {
+            activity.enterPictureInPictureMode(mPictureInPictureParamsBuilder
+                .setActions(actions)
+                .build());
+        } else {
+            activity.setPictureInPictureParams(mPictureInPictureParamsBuilder
+                .setActions(actions)
+                .build());
+        }
+        player.onPictureInPictureStatusChanged(true);
     }
 
     private void disablePictureInPicture(BetterPlayer player) {

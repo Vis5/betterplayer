@@ -71,7 +71,7 @@ class BetterPlayerDashUtils {
     final String? language = node.getAttribute('lang');
     final String? mimeType = node.getAttribute('mimeType');
 
-    label ??= language;
+    label = language;
 
     return BetterPlayerAsmsAudioTrack(
         id: index,
@@ -106,7 +106,7 @@ class BetterPlayerDashUtils {
       url = 'https:$url';
     }
 
-    name ??= language;
+    name = language;
 
     return BetterPlayerAsmsSubtitle(
         name: name,
