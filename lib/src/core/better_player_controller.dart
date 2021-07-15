@@ -61,6 +61,9 @@ class BetterPlayerController {
   ///between flutter high level code and lower level native code.
   VideoPlayerController? videoPlayerController;
 
+  ///Expose all active eventListeners
+  List<Function(BetterPlayerEvent)?> get eventListeners => _eventListeners;
+
   /// Defines a event listener where video player events will be send.
   Function(BetterPlayerEvent)? get eventListener =>
       betterPlayerConfiguration.eventListener;
@@ -204,6 +207,12 @@ class BetterPlayerController {
   Stream<BetterPlayerControllerEvent> get controllerEventStream =>
       _controllerEventStreamController.stream;
 
+  ///Flag which determines whether are ASMS segments loading
+  bool _asmsSegmentsLoading = false;
+
+  ///List of loaded ASMS segments
+  final List<String> _asmsSegmentsLoaded = [];
+
   BetterPlayerController(
     this.betterPlayerConfiguration, {
     this.betterPlayerPlaylistConfiguration,
@@ -236,7 +245,9 @@ class BetterPlayerController {
 
     ///Build videoPlayerController if null
     if (videoPlayerController == null) {
-      videoPlayerController = VideoPlayerController();
+      videoPlayerController = VideoPlayerController(
+          bufferingConfiguration:
+              betterPlayerDataSource.bufferingConfiguration);
       videoPlayerController?.addListener(_onVideoPlayerChanged);
     }
 
@@ -309,9 +320,13 @@ class BetterPlayerController {
         asmsSubtitles.forEach((BetterPlayerAsmsSubtitle asmsSubtitle) {
           _betterPlayerSubtitlesSourceList.add(
             BetterPlayerSubtitlesSource(
-                type: BetterPlayerSubtitlesSourceType.network,
-                name: asmsSubtitle.name,
-                urls: asmsSubtitle.realUrls),
+              type: BetterPlayerSubtitlesSourceType.network,
+              name: asmsSubtitle.name,
+              urls: asmsSubtitle.realUrls,
+              asmsIsSegmented: asmsSubtitle.isSegmented,
+              asmsSegmentsTime: asmsSubtitle.segmentsTime,
+              asmsSegments: asmsSubtitle.segments,
+            ),
           );
         });
       }
@@ -327,12 +342,20 @@ class BetterPlayerController {
     }
   }
 
-  ///Setup subtitles to be displayed from given subtitle source
+  ///Setup subtitles to be displayed from given subtitle source.
+  ///If subtitles source is segmented then don't load videos at start. Videos
+  ///will load with just in time policy.
   Future<void> setupSubtitleSource(BetterPlayerSubtitlesSource subtitlesSource,
       {bool sourceInitialize = false}) async {
     _betterPlayerSubtitlesSource = subtitlesSource;
     subtitlesLines.clear();
+    _asmsSegmentsLoaded.clear();
+    _asmsSegmentsLoading = false;
+
     if (subtitlesSource.type != BetterPlayerSubtitlesSourceType.none) {
+      if (subtitlesSource.asmsIsSegmented == true) {
+        return;
+      }
       final subtitlesParsed =
           await BetterPlayerSubtitlesFactory.parseSubtitles(subtitlesSource);
       subtitlesLines.addAll(subtitlesParsed);
@@ -341,6 +364,56 @@ class BetterPlayerController {
     _postEvent(BetterPlayerEvent(BetterPlayerEventType.changedSubtitles));
     if (!_disposed && !sourceInitialize) {
       _postControllerEvent(BetterPlayerControllerEvent.changeSubtitles);
+    }
+  }
+
+  ///Load ASMS subtitles segments for given [position].
+  ///Segments are being loaded within range (current video position;endPosition)
+  ///where endPosition is based on time segment detected in HLS playlist. If
+  ///time segment is not present then 5000 ms will be used. Also time segment
+  ///is multiplied by 5 to increase window of duration.
+  ///Segments are also cached, so same segment won't load twice. Only one
+  ///pack of segments can be load at given time.
+  Future _loadAsmsSubtitlesSegments(Duration position) async {
+    try {
+      if (_asmsSegmentsLoading) {
+        return;
+      }
+      _asmsSegmentsLoading = true;
+      final BetterPlayerSubtitlesSource? source = _betterPlayerSubtitlesSource;
+      final Duration loadDurationEnd = Duration(
+          milliseconds: position.inMilliseconds +
+              5 * (_betterPlayerSubtitlesSource?.asmsSegmentsTime ?? 5000));
+
+      final segmentsToLoad = _betterPlayerSubtitlesSource?.asmsSegments
+          ?.where((segment) {
+            return segment.startTime > position &&
+                segment.endTime < loadDurationEnd &&
+                !_asmsSegmentsLoaded.contains(segment.realUrl);
+          })
+          .map((segment) => segment.realUrl)
+          .toList();
+
+      if (segmentsToLoad != null && segmentsToLoad.isNotEmpty) {
+        final subtitlesParsed =
+            await BetterPlayerSubtitlesFactory.parseSubtitles(
+                BetterPlayerSubtitlesSource(
+          type: _betterPlayerSubtitlesSource!.type,
+          headers: _betterPlayerSubtitlesSource!.headers,
+          urls: segmentsToLoad,
+        ));
+
+        ///Additional check if current source of subtitles is same as source
+        ///used to start loading subtitles. It can be different when user
+        ///changes subtitles and there was already pending load.
+        if (source == _betterPlayerSubtitlesSource) {
+          subtitlesLines.addAll(subtitlesParsed);
+          _asmsSegmentsLoaded.addAll(segmentsToLoad);
+        }
+      }
+      _asmsSegmentsLoading = false;
+    } catch (exception) {
+      BetterPlayerUtils.log("Load ASMS subtitle segments failed: $exception");
     }
   }
 
@@ -368,32 +441,44 @@ class BetterPlayerController {
     switch (betterPlayerDataSource.type) {
       case BetterPlayerDataSourceType.network:
         await videoPlayerController?.setNetworkDataSource(
-            betterPlayerDataSource.url,
-            headers: _getHeaders(),
-            useCache:
-                _betterPlayerDataSource!.cacheConfiguration?.useCache ?? false,
-            maxCacheSize:
-                _betterPlayerDataSource!.cacheConfiguration?.maxCacheSize ?? 0,
-            maxCacheFileSize:
-                _betterPlayerDataSource!.cacheConfiguration?.maxCacheFileSize ??
-                    0,
-            showNotification: _betterPlayerDataSource
-                ?.notificationConfiguration?.showNotification,
-            title: _betterPlayerDataSource?.notificationConfiguration?.title,
-            author: _betterPlayerDataSource?.notificationConfiguration?.author,
-            imageUrl:
-                _betterPlayerDataSource?.notificationConfiguration?.imageUrl,
-            notificationChannelName: _betterPlayerDataSource
-                ?.notificationConfiguration?.notificationChannelName,
-            overriddenDuration: _betterPlayerDataSource!.overriddenDuration,
-            formatHint: _getVideoFormat(_betterPlayerDataSource!.videoFormat),
-            licenseUrl: _betterPlayerDataSource?.drmConfiguration?.licenseUrl,
-            drmHeaders: _betterPlayerDataSource?.drmConfiguration?.headers,
-            activityName: _betterPlayerDataSource
-                ?.notificationConfiguration?.activityName);
+          betterPlayerDataSource.url,
+          headers: _getHeaders(),
+          useCache:
+              _betterPlayerDataSource!.cacheConfiguration?.useCache ?? false,
+          maxCacheSize:
+              _betterPlayerDataSource!.cacheConfiguration?.maxCacheSize ?? 0,
+          maxCacheFileSize:
+              _betterPlayerDataSource!.cacheConfiguration?.maxCacheFileSize ??
+                  0,
+          cacheKey: _betterPlayerDataSource?.cacheConfiguration?.key,
+          showNotification: _betterPlayerDataSource
+              ?.notificationConfiguration?.showNotification,
+          title: _betterPlayerDataSource?.notificationConfiguration?.title,
+          author: _betterPlayerDataSource?.notificationConfiguration?.author,
+          imageUrl:
+              _betterPlayerDataSource?.notificationConfiguration?.imageUrl,
+          notificationChannelName: _betterPlayerDataSource
+              ?.notificationConfiguration?.notificationChannelName,
+          overriddenDuration: _betterPlayerDataSource!.overriddenDuration,
+          formatHint: _getVideoFormat(_betterPlayerDataSource!.videoFormat),
+          licenseUrl: _betterPlayerDataSource?.drmConfiguration?.licenseUrl,
+          certificateUrl:
+              _betterPlayerDataSource?.drmConfiguration?.certificateUrl,
+          drmHeaders: _betterPlayerDataSource?.drmConfiguration?.headers,
+          activityName:
+              _betterPlayerDataSource?.notificationConfiguration?.activityName,
+        );
 
         break;
       case BetterPlayerDataSourceType.file:
+        final file = File(betterPlayerDataSource.url);
+        if (!file.existsSync()) {
+          BetterPlayerUtils.log(
+              "File ${file.path} doesn't exists. This may be because "
+              "you're acessing file from native path and Flutter doesn't "
+              "recognize this path.");
+        }
+
         await videoPlayerController?.setFileDataSource(
             File(betterPlayerDataSource.url),
             showNotification: _betterPlayerDataSource
@@ -698,6 +783,10 @@ class BetterPlayerController {
       videoPlayerController?.refresh();
     }
 
+    if (_betterPlayerSubtitlesSource?.asmsIsSegmented == true) {
+      _loadAsmsSubtitlesSegments(currentVideoPlayerValue.position);
+    }
+
     final int now = DateTime.now().millisecondsSinceEpoch;
     if (now - _lastPositionSelection > 500) {
       _lastPositionSelection = now;
@@ -876,6 +965,8 @@ class BetterPlayerController {
         return BetterPlayerTranslations.turkish();
       case "vi":
         return BetterPlayerTranslations.vietnamese();
+      case "es":
+        return BetterPlayerTranslations.spanish();
       default:
         return BetterPlayerTranslations();
     }
@@ -1108,12 +1199,14 @@ class BetterPlayerController {
         const BetterPlayerCacheConfiguration(useCache: true);
 
     final dataSource = DataSource(
-        sourceType: DataSourceType.network,
-        uri: betterPlayerDataSource.url,
-        useCache: true,
-        headers: betterPlayerDataSource.headers,
-        maxCacheSize: cacheConfig.maxCacheSize,
-        maxCacheFileSize: cacheConfig.maxCacheFileSize);
+      sourceType: DataSourceType.network,
+      uri: betterPlayerDataSource.url,
+      useCache: true,
+      headers: betterPlayerDataSource.headers,
+      maxCacheSize: cacheConfig.maxCacheSize,
+      maxCacheFileSize: cacheConfig.maxCacheFileSize,
+      cacheKey: cacheConfig.key,
+    );
 
     return VideoPlayerController.preCache(dataSource, cacheConfig.preCacheSize);
   }

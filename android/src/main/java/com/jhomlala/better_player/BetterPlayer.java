@@ -1,10 +1,5 @@
 package com.jhomlala.better_player;
 
-import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
-import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
-import static com.jhomlala.better_player.DataSourceUtils.getDataSourceFactory;
-import static com.jhomlala.better_player.DataSourceUtils.getUserAgent;
-
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,21 +18,33 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.Observer;
+import androidx.media.session.MediaButtonReceiver;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ControlDispatcher;
+import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Player.EventListener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
-import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
 import com.google.android.exoplayer2.drm.DummyExoMediaDrm;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
+import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
 import com.google.android.exoplayer2.drm.UnsupportedDrmException;
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
@@ -53,25 +60,11 @@ import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.MappingTrackSelector;
+import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.util.Util;
-import com.google.android.exoplayer2.ui.PlayerNotificationManager;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import androidx.lifecycle.Observer;
-import androidx.media.session.MediaButtonReceiver;
-import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
-
-import io.flutter.plugin.common.EventChannel;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.view.TextureRegistry;
 
 import java.io.File;
 import java.util.Arrays;
@@ -81,7 +74,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.google.android.exoplayer2.PlaybackParameters;
+import io.flutter.plugin.common.EventChannel;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.view.TextureRegistry;
+
+import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
+import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
+import static com.jhomlala.better_player.DataSourceUtils.getDataSourceFactory;
+import static com.jhomlala.better_player.DataSourceUtils.getUserAgent;
 
 final class BetterPlayer {
     private static final String TAG = "BetterPlayer";
@@ -97,6 +97,7 @@ final class BetterPlayer {
     private final QueuingEventSink eventSink = new QueuingEventSink();
     private final EventChannel eventChannel;
     private final DefaultTrackSelector trackSelector;
+    private final LoadControl loadControl;
 
     private boolean isInitialized = false;
     private Surface surface;
@@ -104,23 +105,39 @@ final class BetterPlayer {
     private PlayerNotificationManager playerNotificationManager;
     private Handler refreshHandler;
     private Runnable refreshRunnable;
-    private EventListener exoPlayerEventListener;
+    private ExoPlayer.Listener exoPlayerEventListener;
     private Bitmap bitmap;
     private MediaSessionCompat mediaSession;
     private DrmSessionManager drmSessionManager;
     private WorkManager workManager;
     private HashMap<UUID, Observer<WorkInfo>> workerObserverMap;
+    private CustomDefaultLoadControl customDefaultLoadControl;
 
 
     BetterPlayer(
             Context context,
             EventChannel eventChannel,
             TextureRegistry.SurfaceTextureEntry textureEntry,
+            CustomDefaultLoadControl customDefaultLoadControl,
             Result result) {
         this.eventChannel = eventChannel;
         this.textureEntry = textureEntry;
         trackSelector = new DefaultTrackSelector(context);
-        exoPlayer = new SimpleExoPlayer.Builder(context).setTrackSelector(trackSelector).build();
+
+        this.customDefaultLoadControl = customDefaultLoadControl != null ?
+                customDefaultLoadControl : new CustomDefaultLoadControl();
+        DefaultLoadControl.Builder loadBuilder = new DefaultLoadControl.Builder();
+        loadBuilder.setBufferDurationsMs(
+                this.customDefaultLoadControl.minBufferMs,
+                this.customDefaultLoadControl.maxBufferMs,
+                this.customDefaultLoadControl.bufferForPlaybackMs,
+                this.customDefaultLoadControl.bufferForPlaybackAfterRebufferMs);
+        loadControl = loadBuilder.build();
+
+        exoPlayer = new SimpleExoPlayer.Builder(context)
+                .setTrackSelector(trackSelector)
+                .setLoadControl(loadControl)
+                .build();
         workManager = WorkManager.getInstance(context);
         workerObserverMap = new HashMap<>();
 
@@ -130,7 +147,8 @@ final class BetterPlayer {
     void setDataSource(
             Context context, String key, String dataSource, String formatHint, Result result,
             Map<String, String> headers, boolean useCache, long maxCacheSize, long maxCacheFileSize,
-            long overriddenDuration, String licenseUrl, Map<String, String> drmHeaders) {
+            long overriddenDuration, String licenseUrl, Map<String, String> drmHeaders,
+            String cacheKey) {
         this.key = key;
         isInitialized = false;
 
@@ -187,7 +205,7 @@ final class BetterPlayer {
             dataSourceFactory = new DefaultDataSourceFactory(context, userAgent);
         }
 
-        MediaSource mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, context);
+        MediaSource mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, cacheKey, context);
         if (overriddenDuration != 0) {
             ClippingMediaSource clippingMediaSource = new ClippingMediaSource(mediaSource, 0, overriddenDuration * 1000);
             exoPlayer.setMediaSource(clippingMediaSource);
@@ -307,11 +325,10 @@ final class BetterPlayer {
             }
         }
 
-
-        playerNotificationManager = new PlayerNotificationManager(context,
-                playerNotificationChannelName,
+        playerNotificationManager = new PlayerNotificationManager.Builder(context,
                 NOTIFICATION_ID,
-                mediaDescriptionAdapter);
+                playerNotificationChannelName,
+                mediaDescriptionAdapter).build();
         playerNotificationManager.setPlayer(exoPlayer);
         playerNotificationManager.setUseNextAction(false);
         playerNotificationManager.setUsePreviousAction(false);
@@ -345,7 +362,7 @@ final class BetterPlayer {
             refreshHandler.postDelayed(refreshRunnable, 0);
         }
 
-        exoPlayerEventListener = new EventListener() {
+        exoPlayerEventListener = new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 mediaSession.setMetadata(new MediaMetadataCompat.Builder()
@@ -438,7 +455,9 @@ final class BetterPlayer {
 
 
     public void disposeRemoteNotifications() {
-        exoPlayer.removeListener(exoPlayerEventListener);
+        if (exoPlayerEventListener != null) {
+            exoPlayer.removeListener(exoPlayerEventListener);
+        }
         if (refreshHandler != null) {
             refreshHandler.removeCallbacksAndMessages(null);
             refreshHandler = null;
@@ -452,7 +471,8 @@ final class BetterPlayer {
 
 
     private MediaSource buildMediaSource(
-            Uri uri, DataSource.Factory mediaDataSourceFactory, String formatHint, Context context) {
+            Uri uri, DataSource.Factory mediaDataSourceFactory, String formatHint, String cacheKey,
+            Context context) {
         int type;
         if (formatHint == null) {
             String lastPathSegment = uri.getLastPathSegment();
@@ -479,28 +499,35 @@ final class BetterPlayer {
                     break;
             }
         }
+        MediaItem.Builder mediaItemBuilder = new MediaItem.Builder();
+        mediaItemBuilder.setUri(uri);
+        if (cacheKey != null && cacheKey.length() > 0) {
+            mediaItemBuilder.setCustomCacheKey(cacheKey);
+        }
+        MediaItem mediaItem = mediaItemBuilder.build();
         switch (type) {
+
             case C.TYPE_SS:
                 return new SsMediaSource.Factory(
                         new DefaultSsChunkSource.Factory(mediaDataSourceFactory),
                         new DefaultDataSourceFactory(context, null, mediaDataSourceFactory))
                         .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(MediaItem.fromUri(uri));
+                        .createMediaSource(mediaItem);
             case C.TYPE_DASH:
                 return new DashMediaSource.Factory(
                         new DefaultDashChunkSource.Factory(mediaDataSourceFactory),
                         new DefaultDataSourceFactory(context, null, mediaDataSourceFactory))
                         .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(MediaItem.fromUri(uri));
+                        .createMediaSource(mediaItem);
             case C.TYPE_HLS:
                 return new HlsMediaSource.Factory(mediaDataSourceFactory)
                         .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(MediaItem.fromUri(uri));
+                        .createMediaSource(mediaItem);
             case C.TYPE_OTHER:
                 return new ProgressiveMediaSource.Factory(mediaDataSourceFactory,
                         new DefaultExtractorsFactory())
                         .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(MediaItem.fromUri(uri));
+                        .createMediaSource(mediaItem);
             default: {
                 throw new IllegalStateException("Unsupported type: " + type);
             }
@@ -527,39 +554,37 @@ final class BetterPlayer {
         exoPlayer.setVideoSurface(surface);
         setAudioAttributes(exoPlayer, true);
 
-        exoPlayer.addListener(
-                new EventListener() {
-
-                    @Override
-                    public void onPlaybackStateChanged(int playbackState) {
-                        if (playbackState == Player.STATE_BUFFERING) {
-                            sendBufferingUpdate();
-                            Map<String, Object> event = new HashMap<>();
-                            event.put("event", "bufferingStart");
-                            eventSink.success(event);
-                        } else if (playbackState == Player.STATE_READY) {
-                            if (!isInitialized) {
-                                isInitialized = true;
-                                sendInitialized();
-                            }
-
-                            Map<String, Object> event = new HashMap<>();
-                            event.put("event", "bufferingEnd");
-                            eventSink.success(event);
-
-                        } else if (playbackState == Player.STATE_ENDED) {
-                            Map<String, Object> event = new HashMap<>();
-                            event.put("event", "completed");
-                            event.put("key", key);
-                            eventSink.success(event);
-                        }
+        exoPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if (playbackState == Player.STATE_BUFFERING) {
+                    sendBufferingUpdate();
+                    Map<String, Object> event = new HashMap<>();
+                    event.put("event", "bufferingStart");
+                    eventSink.success(event);
+                } else if (playbackState == Player.STATE_READY) {
+                    if (!isInitialized) {
+                        isInitialized = true;
+                        sendInitialized();
                     }
 
-                    @Override
-                    public void onPlayerError(final ExoPlaybackException error) {
-                        eventSink.error("VideoError", "Video player had error " + error, null);
-                    }
-                });
+                    Map<String, Object> event = new HashMap<>();
+                    event.put("event", "bufferingEnd");
+                    eventSink.success(event);
+
+                } else if (playbackState == Player.STATE_ENDED) {
+                    Map<String, Object> event = new HashMap<>();
+                    event.put("event", "completed");
+                    event.put("key", key);
+                    eventSink.success(event);
+                }
+            }
+
+            @Override
+            public void onPlayerError(final ExoPlaybackException error) {
+                eventSink.error("VideoError", "Video player had error " + error, null);
+            }
+        });
 
         Map<String, Object> reply = new HashMap<>();
         reply.put("textureId", textureEntry.id());
@@ -576,7 +601,7 @@ final class BetterPlayer {
     }
 
     private void setAudioAttributes(SimpleExoPlayer exoPlayer, Boolean mixWithOthers) {
-        Player.AudioComponent audioComponent = exoPlayer.getAudioComponent();
+        ExoPlayer.AudioComponent audioComponent = exoPlayer.getAudioComponent();
         if (audioComponent == null) {
             return;
         }
@@ -747,13 +772,18 @@ final class BetterPlayer {
                     }
                     TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex);
                     boolean hasElementWithoutLabel = false;
+                    boolean hasStrangeAudioTrack = false;
                     for (int groupIndex = 0; groupIndex < trackGroupArray.length; groupIndex++) {
                         TrackGroup group = trackGroupArray.get(groupIndex);
                         for (int groupElementIndex = 0; groupElementIndex < group.length; groupElementIndex++) {
-                            String label = group.getFormat(groupElementIndex).label;
-                            if (label == null) {
+                            Format format = group.getFormat(groupElementIndex);
+
+                            if (format.label == null) {
                                 hasElementWithoutLabel = true;
-                                break;
+                            }
+
+                            if (format.id != null && format.id.equals("1/15")) {
+                                hasStrangeAudioTrack = true;
                             }
                         }
                     }
@@ -762,16 +792,22 @@ final class BetterPlayer {
                         TrackGroup group = trackGroupArray.get(groupIndex);
                         for (int groupElementIndex = 0; groupElementIndex < group.length; groupElementIndex++) {
                             String label = group.getFormat(groupElementIndex).label;
+
                             if (name.equals(label) && index == groupIndex) {
                                 setAudioTrack(rendererIndex, groupIndex, groupElementIndex);
                                 return;
                             }
+
                             ///Fallback option
-                            if (hasElementWithoutLabel && index == groupIndex) {
+                            if (!hasStrangeAudioTrack && hasElementWithoutLabel && index == groupIndex) {
                                 setAudioTrack(rendererIndex, groupIndex, groupElementIndex);
                                 return;
                             }
-
+                            ///Fallback option
+                            if (hasStrangeAudioTrack && name.equals(label)) {
+                                setAudioTrack(rendererIndex, groupIndex, groupElementIndex);
+                                return;
+                            }
                         }
                     }
                 }
@@ -814,10 +850,8 @@ final class BetterPlayer {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void clearCache(Context context, Result result) {
         try {
-            File file = context.getCacheDir();
-            if (file != null) {
-                file.delete();
-            }
+            File file = new File(context.getCacheDir(), "betterPlayerCache");
+            deleteDirectory(file);
             result.success(null);
         } catch (Exception exception) {
             Log.e(TAG, exception.toString());
@@ -825,15 +859,34 @@ final class BetterPlayer {
         }
     }
 
+    private static void deleteDirectory(File file) {
+        if (file.isDirectory()) {
+            File[] entries = file.listFiles();
+            if (entries != null) {
+                for (File entry : entries) {
+                    deleteDirectory(entry);
+                }
+            }
+        }
+        if (!file.delete()) {
+            Log.e(TAG, "Failed to delete cache dir.");
+        }
+    }
+
+
     //Start pre cache of video. Invoke work manager job and start caching in background.
     static void preCache(Context context, String dataSource, long preCacheSize,
                          long maxCacheSize, long maxCacheFileSize, Map<String, String> headers,
-                         Result result) {
+                         String cacheKey, Result result) {
         Data.Builder dataBuilder = new Data.Builder()
                 .putString(BetterPlayerPlugin.URL_PARAMETER, dataSource)
                 .putLong(BetterPlayerPlugin.PRE_CACHE_SIZE_PARAMETER, preCacheSize)
                 .putLong(BetterPlayerPlugin.MAX_CACHE_SIZE_PARAMETER, maxCacheSize)
                 .putLong(BetterPlayerPlugin.MAX_CACHE_FILE_SIZE_PARAMETER, maxCacheFileSize);
+
+        if (cacheKey != null) {
+            dataBuilder.putString(BetterPlayerPlugin.CACHE_KEY_PARAMETER, cacheKey);
+        }
         for (String headerKey : headers.keySet()) {
             dataBuilder.putString(BetterPlayerPlugin.HEADER_PARAMETER + headerKey, headers.get(headerKey));
         }
@@ -888,5 +941,6 @@ final class BetterPlayer {
     }
 
 }
+
 
 
