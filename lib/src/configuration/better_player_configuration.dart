@@ -112,6 +112,9 @@ class BetterPlayerConfiguration {
   ///Default value is true.
   final bool autoDispose;
 
+  final bool isPortrait;
+  final BoxFit fullScreenFit;
+
   const BetterPlayerConfiguration({
     this.aspectRatio,
     this.autoPlay = false,
@@ -147,6 +150,8 @@ class BetterPlayerConfiguration {
     this.autoDetectFullscreenDeviceOrientation = false,
     this.handleLifecycle = true,
     this.autoDispose = true,
+    this.isPortrait = false,
+    this.fullScreenFit = BoxFit.fitWidth
   });
 
   BetterPlayerConfiguration copyWith({
@@ -171,6 +176,7 @@ class BetterPlayerConfiguration {
     BetterPlayerSubtitlesConfiguration? subtitlesConfiguration,
     BetterPlayerControlsConfiguration? controlsConfiguration,
     BoxFit? fit,
+    BoxFit? fullScreenFit,
     double? rotation,
     Function(double visibilityFraction)? playerVisibilityChangedBehavior,
     List<BetterPlayerTranslations>? translations,
@@ -204,6 +210,7 @@ class BetterPlayerConfiguration {
       controlsConfiguration:
           controlsConfiguration ?? this.controlsConfiguration,
       fit: fit ?? this.fit,
+      fullScreenFit: fullScreenFit ?? this.fullScreenFit,
       rotation: rotation ?? this.rotation,
       playerVisibilityChangedBehavior: playerVisibilityChangedBehavior ??
           this.playerVisibilityChangedBehavior,

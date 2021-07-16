@@ -196,6 +196,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   StreamSubscription<dynamic>? _eventSubscription;
 
   bool get _created => _creatingCompleter.isCompleted;
+  bool _isPortrait = false;
 
   DateTime? _seekTime;
   Duration? _seekPosition;
@@ -222,9 +223,16 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       videoEventStreamController.add(event);
       switch (event.eventType) {
         case VideoEventType.initialized:
+          // If in hard-portrait mode, forcefully switch which dimension is higher to be the height
+          var dim = event.size;
+          if (_isPortrait && dim != null) {
+            if (dim.width > dim.height) {
+              dim = Size(dim.height, dim.width);
+            }
+          }
           value = value.copyWith(
             duration: event.duration,
-            size: event.size,
+            size: dim,
           );
           _initializingCompleter.complete(null);
           _applyPlayPause();
@@ -281,6 +289,10 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _eventSubscription = _videoPlayerPlatform
         .videoEventsFor(_textureId)
         .listen(eventListener, onError: errorListener);
+  }
+
+  void setIsPortrait(bool val) {
+    _isPortrait = val;
   }
 
   /// Set data source for playing a video from an asset.

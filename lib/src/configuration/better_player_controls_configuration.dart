@@ -168,6 +168,12 @@ class BetterPlayerControlsConfiguration {
   ///Color of text in bottom modal sheet used for overflow menu items.
   final Color overflowModalTextColor;
 
+  ///Used on Dccast Options
+  final bool enableOptions;
+  
+  ///Used on Dccast VOD
+  final bool enableNextPrev;
+
   const BetterPlayerControlsConfiguration(
       {this.controlBarColor = Colors.black87,
       this.textColor = Colors.white,
@@ -219,7 +225,9 @@ class BetterPlayerControlsConfiguration {
       this.loadingWidget,
       this.backgroundColor = Colors.black,
       this.overflowModalColor = Colors.white,
-      this.overflowModalTextColor = Colors.black});
+      this.overflowModalTextColor = Colors.black,
+      this.enableOptions = false,
+      this.enableNextPrev = false});
 
   factory BetterPlayerControlsConfiguration.white() {
     return const BetterPlayerControlsConfiguration(

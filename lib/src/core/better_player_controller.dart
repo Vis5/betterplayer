@@ -248,6 +248,7 @@ class BetterPlayerController {
       videoPlayerController = VideoPlayerController(
           bufferingConfiguration:
               betterPlayerDataSource.bufferingConfiguration);
+      videoPlayerController?.setIsPortrait(this.betterPlayerConfiguration.isPortrait);
       videoPlayerController?.addListener(_onVideoPlayerChanged);
     }
 

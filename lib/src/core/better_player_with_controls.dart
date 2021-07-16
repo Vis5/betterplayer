@@ -138,6 +138,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
             child: _BetterPlayerVideoFitWidget(
               betterPlayerController,
               betterPlayerController.betterPlayerConfiguration.fit,
+              betterPlayerController.betterPlayerConfiguration.fullScreenFit,
             ),
           ),
           betterPlayerController.betterPlayerConfiguration.overlay ??
@@ -212,12 +213,14 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
 class _BetterPlayerVideoFitWidget extends StatefulWidget {
   const _BetterPlayerVideoFitWidget(
     this.betterPlayerController,
-    this.boxFit, {
+    this.boxFit,
+    this.boxFullscreenFit, {
     Key? key,
   }) : super(key: key);
 
   final BetterPlayerController betterPlayerController;
   final BoxFit boxFit;
+  final BoxFit boxFullscreenFit;
 
   @override
   _BetterPlayerVideoFitWidgetState createState() =>
@@ -307,7 +310,7 @@ class _BetterPlayerVideoFitWidgetState
             width: double.infinity,
             height: double.infinity,
             child: FittedBox(
-              fit: widget.boxFit,
+              fit: widget.betterPlayerController.isFullScreen ? widget.boxFullscreenFit : widget.boxFit,
               child: SizedBox(
                 width: controller!.value.size?.width ?? 0,
                 height: controller!.value.size?.height ?? 0,

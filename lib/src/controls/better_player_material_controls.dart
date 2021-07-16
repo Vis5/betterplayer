@@ -3,6 +3,8 @@ import 'dart:async';
 
 // Project imports:
 import 'package:better_player/src/configuration/better_player_controls_configuration.dart';
+import 'package:better_player/src/configuration/better_player_event.dart';
+import 'package:better_player/src/configuration/better_player_event_type.dart';
 import 'package:better_player/src/controls/better_player_clickable_widget.dart';
 import 'package:better_player/src/controls/better_player_controls_state.dart';
 import 'package:better_player/src/controls/better_player_material_progress_bar.dart';
@@ -182,7 +184,29 @@ class _BetterPlayerMaterialControlsState
       return const SizedBox();
     }
 
-    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+    return Row(children: [
+      AnimatedOpacity(
+        opacity: _hideStuff ? 0.0 : 1.0,
+        duration: betterPlayerControlsConfiguration.controlsHideTime,
+        onEnd: _onPlayerHide,
+        child: BetterPlayerMaterialClickableWidget(
+          onTap: () {
+            for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
+              if (eventListener != null) {
+                eventListener(BetterPlayerEvent((BetterPlayerEventType.onOptions)));
+              }
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              Icons.settings,
+              color: betterPlayerControlsConfiguration.iconsColor,
+            ),
+          ),
+        ),
+      ),
+      Spacer(),
       if (_controlsConfiguration.enablePip)
         _buildPipButtonWrapperWidget(_hideStuff, _onPlayerHide)
       else
@@ -367,12 +391,51 @@ class _BetterPlayerMaterialControlsState
     );
   }
 
+  Widget _buildCustomPrevWidget() {
+    return _buildHitAreaClickableButton(
+      icon: Icon(
+        _controlsConfiguration.skipBackIcon,
+        size: 32,
+        color: _controlsConfiguration.iconsColor,
+      ),
+      onClicked: () {
+        for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
+          if (eventListener != null) {
+            eventListener(BetterPlayerEvent((BetterPlayerEventType.onPrev)));
+          }
+        }
+      },
+    );
+  }
+
+  Widget _buildCustomNextWidget() {
+    return _buildHitAreaClickableButton(
+      icon: Icon(
+        _controlsConfiguration.skipForwardIcon,
+        size: 32,
+        color: _controlsConfiguration.iconsColor,
+      ),
+      onClicked: () {
+        for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
+          if (eventListener != null) {
+            eventListener(BetterPlayerEvent((BetterPlayerEventType.onNext)));
+          }
+        }
+      },
+    );
+  }
+
   Widget _buildMiddleRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          if (_controlsConfiguration.enableNextPrev)
+            _buildCustomPrevWidget(),
+          if (_controlsConfiguration.enableNextPrev)
+            Spacer(),
+
           if (_controlsConfiguration.enableSkips)
             _buildSkipButton()
           else
@@ -382,6 +445,11 @@ class _BetterPlayerMaterialControlsState
             _buildForwardButton()
           else
             const SizedBox(),
+            
+          if (_controlsConfiguration.enableNextPrev)
+            Spacer(),
+          if (_controlsConfiguration.enableNextPrev)
+            _buildCustomNextWidget(),
         ],
       ),
     );

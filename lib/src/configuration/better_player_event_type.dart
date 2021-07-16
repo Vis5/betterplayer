@@ -23,4 +23,8 @@ enum BetterPlayerEventType {
   bufferingStart,
   bufferingUpdate,
   bufferingEnd,
+  // custom
+  onOptions,
+  onPrev,
+  onNext,
 }

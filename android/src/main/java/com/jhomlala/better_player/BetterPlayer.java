@@ -686,10 +686,10 @@ final class BetterPlayer {
                 int height = videoFormat.height;
                 int rotationDegrees = videoFormat.rotationDegrees;
                 // Switch the width/height if video was taken in portrait mode
-                if (rotationDegrees == 90 || rotationDegrees == 270) {
+                /*if (rotationDegrees == 90 || rotationDegrees == 270) {
                     width = exoPlayer.getVideoFormat().height;
                     height = exoPlayer.getVideoFormat().width;
-                }
+                }*/
                 event.put("width", width);
                 event.put("height", height);
             }
