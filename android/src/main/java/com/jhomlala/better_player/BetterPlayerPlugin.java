@@ -110,6 +110,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
     private static final String DISPOSE_METHOD = "dispose";
     private static final String PRE_CACHE_METHOD = "preCache";
     private static final String STOP_PRE_CACHE_METHOD = "stopPreCache";
+    private static final String CONTINUE_NOTIFICATION_METHOD = "continueNotification";
 
     /** Intent extra for media controls from Picture-in-Picture mode. */
     private static final String ACTION_MEDIA_CONTROL = "media_control";
@@ -292,6 +293,10 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                 dispose(player, textureId);
                 result.success(null);
                 break;
+            case CONTINUE_NOTIFICATION_METHOD:
+                continueNotification(player);
+                result.success(null);
+                break;
             default:
                 result.notImplemented();
                 break;
@@ -428,6 +433,30 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                         && currentNotificationDataSource == dataSource) {
                     return;
                 }
+                currentNotificationDataSource = dataSource;
+                currentNotificationTextureId = textureId;
+                removeOtherNotificationListeners();
+                boolean showNotification = getParameter(dataSource, SHOW_NOTIFICATION_PARAMETER, false);
+                if (showNotification) {
+                    String title = getParameter(dataSource, TITLE_PARAMETER, "");
+                    String author = getParameter(dataSource, AUTHOR_PARAMETER, "");
+                    String imageUrl = getParameter(dataSource, IMAGE_URL_PARAMETER, "");
+                    String notificationChannelName = getParameter(dataSource, NOTIFICATION_CHANNEL_NAME_PARAMETER, null);
+                    String activityName = getParameter(dataSource, ACTIVITY_NAME_PARAMETER, "MainActivity");
+                    betterPlayer.setupPlayerNotification(flutterState.applicationContext,
+                            title, author, imageUrl, notificationChannelName, activityName);
+                }
+            }
+        } catch (Exception exception) {
+            Log.e(TAG, "SetupNotification failed", exception);
+        }
+    }
+
+    private void continueNotification(BetterPlayer betterPlayer) {
+        try {
+            Long textureId = getTextureId(betterPlayer);
+            if (textureId != null) {
+                Map<String, Object> dataSource = dataSources.get(textureId);
                 currentNotificationDataSource = dataSource;
                 currentNotificationTextureId = textureId;
                 removeOtherNotificationListeners();

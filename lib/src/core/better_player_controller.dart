@@ -678,6 +678,13 @@ class BetterPlayerController {
         parameters: <String, dynamic>{_volumeParameter: volume}));
   }
 
+  Future<void> continueNotification() async {
+  if (videoPlayerController == null) {
+    BetterPlayerUtils.log("The data source has not been initialized");
+    return;
+  }
+  await videoPlayerController!.continueNotification();
+
   ///Set playback speed of video. Allows to set speed value between 0 and 2.
   Future<void> setSpeed(double speed) async {
     if (speed < 0 || speed > 2) {
