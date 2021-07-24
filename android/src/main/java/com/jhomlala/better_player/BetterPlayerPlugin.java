@@ -493,13 +493,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
 
     private void enablePictureInPicture(BetterPlayer player) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Original code
-            /*player.setupMediaSession(flutterState.applicationContext, true);
-            activity.enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
-            startPictureInPictureListenerTimer(player);
-            player.onPictureInPictureStatusChanged(true);*/
-            
-            player.setupMediaSession(flutterState.applicationContext, true);
+            // player.setupMediaSession(flutterState.applicationContext, true);
             pipPaused = true;
             updatePipButton(player, 0, true);
 
