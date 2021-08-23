@@ -133,13 +133,11 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
         fit: StackFit.passthrough,
         children: <Widget>[
           if (placeholderOnTop) _buildPlaceholder(betterPlayerController),
-          Transform.rotate(
-            angle: rotation * pi / 180,
-            child: _BetterPlayerVideoFitWidget(
-              betterPlayerController,
-              betterPlayerController.betterPlayerConfiguration.fit,
-              betterPlayerController.betterPlayerConfiguration.fullScreenFit,
-            ),
+          _BetterPlayerVideoFitWidget(
+            betterPlayerController,
+            betterPlayerController.betterPlayerConfiguration.fit,
+            betterPlayerController.betterPlayerConfiguration.fullScreenFit,
+            rotation ~/ 90
           ),
           betterPlayerController.betterPlayerConfiguration.overlay ??
               Container(),
@@ -214,13 +212,15 @@ class _BetterPlayerVideoFitWidget extends StatefulWidget {
   const _BetterPlayerVideoFitWidget(
     this.betterPlayerController,
     this.boxFit,
-    this.boxFullscreenFit, {
+    this.boxFullscreenFit,
+    this.quarterTurns, {
     Key? key,
   }) : super(key: key);
 
   final BetterPlayerController betterPlayerController;
   final BoxFit boxFit;
   final BoxFit boxFullscreenFit;
+  final int quarterTurns;
 
   @override
   _BetterPlayerVideoFitWidgetState createState() =>
@@ -310,11 +310,16 @@ class _BetterPlayerVideoFitWidgetState
             width: double.infinity,
             height: double.infinity,
             child: FittedBox(
-              fit: widget.betterPlayerController.isFullScreen ? widget.boxFullscreenFit : widget.boxFit,
+              fit: widget.betterPlayerController.isFullScreen
+                  ? widget.boxFullscreenFit
+                  : widget.boxFit,
               child: SizedBox(
                 width: controller!.value.size?.width ?? 0,
                 height: controller!.value.size?.height ?? 0,
-                child: VideoPlayer(controller),
+                child: RotatedBox(
+                  quarterTurns: widget.quarterTurns,
+                  child: VideoPlayer(controller),
+                ),
               ),
             ),
           ),
