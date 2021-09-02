@@ -97,16 +97,28 @@ class _BetterPlayerMaterialControlsState
       },
       child: AbsorbPointer(
         absorbing: _hideStuff,
-        child: Column(
+        child: Stack(
           children: [
-            _buildTopBar(),
-            if (_wasLoading)
-              Expanded(child: Center(child: _buildLoadingWidget()))
-            else
-              _buildHitArea(),
-            _buildBottomBar(),
+            AnimatedOpacity(
+              opacity: _hideStuff ? 0 : 0.35,
+              duration: betterPlayerControlsConfiguration.controlsHideTime,
+              onEnd: _onPlayerHide,
+              child: Container(
+                color: Colors.black
+              )
+            ),
+            Column(
+              children: [
+                _buildTopBar(),
+                if (_wasLoading)
+                  Expanded(child: Center(child: _buildLoadingWidget()))
+                else
+                  _buildHitArea(),
+                _buildBottomBar(),
+              ],
+            ),
           ],
-        ),
+        )
       ),
     );
   }
@@ -396,15 +408,17 @@ class _BetterPlayerMaterialControlsState
       icon: Icon(
         _controlsConfiguration.skipBackIcon,
         size: 32,
-        color: _controlsConfiguration.iconsColor,
+        color: _controlsConfiguration.disablePrev
+          ? Colors.grey[400]
+          : _controlsConfiguration.iconsColor,
       ),
-      onClicked: () {
+      onClicked: (_controlsConfiguration.disablePrev ? null : () {
         for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
           if (eventListener != null) {
             eventListener(BetterPlayerEvent((BetterPlayerEventType.onPrev)));
           }
         }
-      },
+      }),
     );
   }
 
@@ -413,15 +427,17 @@ class _BetterPlayerMaterialControlsState
       icon: Icon(
         _controlsConfiguration.skipForwardIcon,
         size: 32,
-        color: _controlsConfiguration.iconsColor,
+        color: _controlsConfiguration.disableNext
+          ? Colors.grey[400]
+          : _controlsConfiguration.iconsColor,
       ),
-      onClicked: () {
+      onClicked: (_controlsConfiguration.disableNext ? null : () {
         for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
           if (eventListener != null) {
             eventListener(BetterPlayerEvent((BetterPlayerEventType.onNext)));
           }
         }
-      },
+      }),
     );
   }
 
@@ -456,15 +472,15 @@ class _BetterPlayerMaterialControlsState
   }
 
   Widget _buildHitAreaClickableButton(
-      {Widget? icon, required void Function() onClicked}) {
+      {Widget? icon, required void Function()? onClicked}) {
     return BetterPlayerMaterialClickableWidget(
       onTap: onClicked,
       child: Align(
         child: Container(
-          decoration: BoxDecoration(
+          /*decoration: BoxDecoration(
             color: _controlsConfiguration.controlBarColor,
             borderRadius: BorderRadius.circular(48),
-          ),
+          ),*/
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Stack(

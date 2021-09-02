@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.util.Rational;
 
 import androidx.annotation.NonNull;
 
@@ -569,12 +570,16 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
             actions.add(new RemoteAction(iconPause, "pause", "pause", intent));
         }
 
+      Rational aspectRatio = new Rational(800, 450);
+
         if (first) {
             activity.enterPictureInPictureMode(mPictureInPictureParamsBuilder
+                .setAspectRatio(aspectRatio)
                 .setActions(actions)
                 .build());
         } else {
             activity.setPictureInPictureParams(mPictureInPictureParamsBuilder
+                .setAspectRatio(aspectRatio)
                 .setActions(actions)
                 .build());
         }

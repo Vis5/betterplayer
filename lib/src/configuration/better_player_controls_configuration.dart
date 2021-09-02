@@ -173,6 +173,8 @@ class BetterPlayerControlsConfiguration {
   
   ///Used on Dccast VOD
   final bool enableNextPrev;
+  final bool disablePrev;
+  final bool disableNext;
 
   const BetterPlayerControlsConfiguration(
       {this.controlBarColor = Colors.black87,
@@ -227,7 +229,9 @@ class BetterPlayerControlsConfiguration {
       this.overflowModalColor = Colors.white,
       this.overflowModalTextColor = Colors.black,
       this.enableOptions = false,
-      this.enableNextPrev = false});
+      this.enableNextPrev = false,
+      this.disablePrev = false,
+      this.disableNext = false});
 
   factory BetterPlayerControlsConfiguration.white() {
     return const BetterPlayerControlsConfiguration(

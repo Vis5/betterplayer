@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class BetterPlayerMaterialClickableWidget extends StatelessWidget {
   final Widget child;
-  final void Function() onTap;
+  final void Function()? onTap;
 
   const BetterPlayerMaterialClickableWidget({
     Key? key,
