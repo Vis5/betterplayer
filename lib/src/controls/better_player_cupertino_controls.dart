@@ -752,7 +752,7 @@ class _BetterPlayerCupertinoControlsState
             return GestureDetector(
               onTap: () {
                 betterPlayerController!.enablePictureInPicture(
-                    betterPlayerController!.betterPlayerGlobalKey!);
+                    betterPlayerController!.betterPlayerGlobalKey!, true);
               },
               child: AnimatedOpacity(
                 opacity: _hideStuff ? 0.0 : 1.0,

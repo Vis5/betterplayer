@@ -61,6 +61,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
     private static final String LOOPING_PARAMETER = "looping";
     private static final String VOLUME_PARAMETER = "volume";
     private static final String LOCATION_PARAMETER = "location";
+    private static final String SHOW_PIP_ACTION_PARAMETER = "showPipAction";
     private static final String SPEED_PARAMETER = "speed";
     private static final String WIDTH_PARAMETER = "width";
     private static final String HEIGHT_PARAMETER = "height";
@@ -270,7 +271,8 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                 result.success(null);
                 break;
             case ENABLE_PICTURE_IN_PICTURE_METHOD:
-                enablePictureInPicture(player);
+                boolean actions = call.argument(SHOW_PIP_ACTION_PARAMETER);
+                enablePictureInPicture(player, actions);
                 result.success(null);
                 break;
 
@@ -521,11 +523,11 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
     private final PictureInPictureParams.Builder mPictureInPictureParamsBuilder = new PictureInPictureParams.Builder();
     private boolean pipPaused = true;
 
-    private void enablePictureInPicture(BetterPlayer player) {
+    private void enablePictureInPicture(BetterPlayer player, boolean showActions) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // player.setupMediaSession(flutterState.applicationContext, true);
             pipPaused = true;
-            updatePipButton(player, 0, true);
+            updatePipButton(player, 0, true, showActions);
 
             startPictureInPictureListenerTimer(player);
             player.onPictureInPictureStatusChanged(true);
@@ -543,11 +545,11 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                         setupNotification(player);
                         player.play();
                         pipPaused = false;
-                        updatePipButton(player, 1, false);
+                        updatePipButton(player, 1, false, true);
                     } else {
                         player.pause();
                         pipPaused = true;
-                        updatePipButton(player, 0, false);
+                        updatePipButton(player, 0, false, true);
                     }
                 }
             };
@@ -555,7 +557,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
         }
     }
 
-    private void updatePipButton(BetterPlayer player, int pp, boolean first) {
+    private void updatePipButton(BetterPlayer player, int pp, boolean first, boolean showActions) {
         final ArrayList<RemoteAction> actions = new ArrayList<>();
         final PendingIntent intent = PendingIntent.getBroadcast(
                 flutterState.applicationContext,
@@ -564,10 +566,12 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                 0);
         final Icon iconPlay = Icon.createWithResource(activity, R.drawable.ic_play_player);
         final Icon iconPause = Icon.createWithResource(activity, R.drawable.ic_pause_player);
-        if (pipPaused) {
-            actions.add(new RemoteAction(iconPlay, "play", "play", intent));
-        } else {
-            actions.add(new RemoteAction(iconPause, "pause", "pause", intent));
+        if (showActions) {
+          if (pipPaused) {
+              actions.add(new RemoteAction(iconPlay, "play", "play", intent));
+          } else {
+              actions.add(new RemoteAction(iconPause, "pause", "pause", intent));
+          }
         }
 
       Rational aspectRatio = new Rational(800, 450);

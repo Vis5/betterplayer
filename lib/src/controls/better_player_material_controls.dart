@@ -247,7 +247,7 @@ class _BetterPlayerMaterialControlsState
     return BetterPlayerMaterialClickableWidget(
       onTap: () {
         betterPlayerController!.enablePictureInPicture(
-            betterPlayerController!.betterPlayerGlobalKey!);
+            betterPlayerController!.betterPlayerGlobalKey!, true);
       },
       child: Padding(
         padding: const EdgeInsets.all(8),

@@ -1020,7 +1020,7 @@ class BetterPlayerController {
   ///Enable Picture in Picture (PiP) mode. [betterPlayerGlobalKey] is required
   ///to open PiP mode in iOS. When device is not supported, PiP mode won't be
   ///open.
-  Future<void>? enablePictureInPicture(GlobalKey betterPlayerGlobalKey) async {
+  Future<void>? enablePictureInPicture(GlobalKey betterPlayerGlobalKey, bool? showPipAction) async {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
     }
@@ -1035,7 +1035,8 @@ class BetterPlayerController {
       if (Platform.isAndroid) {
         _wasInFullScreenBeforePiP = _isFullScreen;
         await videoPlayerController?.enablePictureInPicture(
-            left: 0, top: 0, width: 0, height: 0);
+            left: 0, top: 0, width: 0, height: 0,
+            showPipAction: showPipAction);
         // enterFullScreen();
         _postEvent(BetterPlayerEvent(BetterPlayerEventType.pipStart));
         return;
@@ -1055,6 +1056,7 @@ class BetterPlayerController {
           top: position.dy,
           width: renderBox.size.width,
           height: renderBox.size.height,
+          showPipAction: showPipAction
         );
       } else {
         BetterPlayerUtils.log("Unsupported PiP in current platform.");

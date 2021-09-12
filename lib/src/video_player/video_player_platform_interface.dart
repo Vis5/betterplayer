@@ -149,7 +149,7 @@ abstract class VideoPlayerPlatform {
 
   ///Enables PiP mode.
   Future<void> enablePictureInPicture(int? textureId, double? top, double? left,
-      double? width, double? height) {
+      double? width, double? height, bool? showPipAction) {
     throw UnimplementedError(
         'enablePictureInPicture() has not been implemented.');
   }
