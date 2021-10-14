@@ -27,4 +27,5 @@ enum BetterPlayerEventType {
   onOptions,
   onPrev,
   onNext,
+  onAutoPlay
 }

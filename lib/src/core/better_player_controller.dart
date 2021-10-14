@@ -213,14 +213,21 @@ class BetterPlayerController {
   ///List of loaded ASMS segments
   final List<String> _asmsSegmentsLoaded = [];
 
+  ///Custom auto play
+  bool autoPlay = false;
+
   BetterPlayerController(
     this.betterPlayerConfiguration, {
     this.betterPlayerPlaylistConfiguration,
     BetterPlayerDataSource? betterPlayerDataSource,
+    bool? autoPlay
   }) {
     _eventListeners.add(eventListener);
     if (betterPlayerDataSource != null) {
       setupDataSource(betterPlayerDataSource);
+    }
+    if (autoPlay != null) {
+      this.autoPlay = autoPlay;
     }
   }
 
@@ -687,6 +694,14 @@ class BetterPlayerController {
     await videoPlayerController!.continueNotification();
   }
 
+  Future<void> removeNotification() async {
+    if (videoPlayerController == null) {
+      BetterPlayerUtils.log("The data source has not been initialized");
+      return;
+    }
+    await videoPlayerController!.removeNotification();
+  }
+
   ///Set playback speed of video. Allows to set speed value between 0 and 2.
   Future<void> setSpeed(double speed) async {
     if (speed < 0 || speed > 2) {
@@ -1020,7 +1035,8 @@ class BetterPlayerController {
   ///Enable Picture in Picture (PiP) mode. [betterPlayerGlobalKey] is required
   ///to open PiP mode in iOS. When device is not supported, PiP mode won't be
   ///open.
-  Future<void>? enablePictureInPicture(GlobalKey betterPlayerGlobalKey, bool? showPipAction) async {
+  Future<void>? enablePictureInPicture(
+      GlobalKey betterPlayerGlobalKey, bool? showPipAction) async {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
     }
@@ -1035,8 +1051,7 @@ class BetterPlayerController {
       if (Platform.isAndroid) {
         _wasInFullScreenBeforePiP = _isFullScreen;
         await videoPlayerController?.enablePictureInPicture(
-            left: 0, top: 0, width: 0, height: 0,
-            showPipAction: showPipAction);
+            left: 0, top: 0, width: 0, height: 0, showPipAction: showPipAction);
         // enterFullScreen();
         _postEvent(BetterPlayerEvent(BetterPlayerEventType.pipStart));
         return;
@@ -1052,12 +1067,11 @@ class BetterPlayerController {
         }
         final Offset position = renderBox.localToGlobal(Offset.zero);
         return videoPlayerController?.enablePictureInPicture(
-          left: position.dx,
-          top: position.dy,
-          width: renderBox.size.width,
-          height: renderBox.size.height,
-          showPipAction: showPipAction
-        );
+            left: position.dx,
+            top: position.dy,
+            width: renderBox.size.width,
+            height: renderBox.size.height,
+            showPipAction: showPipAction);
       } else {
         BetterPlayerUtils.log("Unsupported PiP in current platform.");
       }

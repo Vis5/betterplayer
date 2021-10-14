@@ -96,30 +96,26 @@ class _BetterPlayerMaterialControlsState
         }
       },
       child: AbsorbPointer(
-        absorbing: _hideStuff,
-        child: Stack(
-          children: [
-            AnimatedOpacity(
-              opacity: _hideStuff ? 0 : 0.35,
-              duration: betterPlayerControlsConfiguration.controlsHideTime,
-              onEnd: _onPlayerHide,
-              child: Container(
-                color: Colors.black
-              )
-            ),
-            Column(
-              children: [
-                _buildTopBar(),
-                if (_wasLoading)
-                  Expanded(child: Center(child: _buildLoadingWidget()))
-                else
-                  _buildHitArea(),
-                _buildBottomBar(),
-              ],
-            ),
-          ],
-        )
-      ),
+          absorbing: _hideStuff,
+          child: Stack(
+            children: [
+              AnimatedOpacity(
+                  opacity: _hideStuff ? 0 : 0.35,
+                  duration: betterPlayerControlsConfiguration.controlsHideTime,
+                  onEnd: _onPlayerHide,
+                  child: Container(color: Colors.black)),
+              Column(
+                children: [
+                  _buildTopBar(),
+                  if (_wasLoading)
+                    Expanded(child: Center(child: _buildLoadingWidget()))
+                  else
+                    _buildHitArea(),
+                  _buildBottomBar(),
+                ],
+              ),
+            ],
+          )),
     );
   }
 
@@ -203,9 +199,11 @@ class _BetterPlayerMaterialControlsState
         onEnd: _onPlayerHide,
         child: BetterPlayerMaterialClickableWidget(
           onTap: () {
-            for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
+            for (final Function(BetterPlayerEvent)? eventListener
+                in betterPlayerController!.eventListeners) {
               if (eventListener != null) {
-                eventListener(BetterPlayerEvent((BetterPlayerEventType.onOptions)));
+                eventListener(
+                    BetterPlayerEvent((BetterPlayerEventType.onOptions)));
               }
             }
           },
@@ -276,6 +274,7 @@ class _BetterPlayerMaterialControlsState
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  _buildAutoPlay(),
                   _buildPipButton(),
                 ],
               ),
@@ -283,6 +282,27 @@ class _BetterPlayerMaterialControlsState
           );
         } else {
           return const SizedBox();
+        }
+      },
+    );
+  }
+
+  Widget _buildAutoPlay() {
+    return Switch(
+      value: betterPlayerController!.autoPlay,
+      activeColor: betterPlayerController!.betterPlayerConfiguration.controlsConfiguration.progressBarPlayedColor,
+      /*inactiveThumbImage: Image.asset("autopause.png",
+              width: 5, height: 5, fit: BoxFit.fitWidth)
+          .image,
+      activeThumbImage: Image.asset("autoplay.png", width: 5).image,*/
+      onChanged: (val) async {
+        betterPlayerController!.autoPlay = val;
+        for (final Function(BetterPlayerEvent)? eventListener
+            in betterPlayerController!.eventListeners) {
+          if (eventListener != null) {
+            eventListener(
+                BetterPlayerEvent((BetterPlayerEventType.onAutoPlay)));
+          }
         }
       },
     );
@@ -409,16 +429,20 @@ class _BetterPlayerMaterialControlsState
         _controlsConfiguration.skipBackIcon,
         size: 32,
         color: _controlsConfiguration.disablePrev
-          ? Colors.grey[400]
-          : _controlsConfiguration.iconsColor,
+            ? Colors.grey[400]
+            : _controlsConfiguration.iconsColor,
       ),
-      onClicked: (_controlsConfiguration.disablePrev ? null : () {
-        for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
-          if (eventListener != null) {
-            eventListener(BetterPlayerEvent((BetterPlayerEventType.onPrev)));
-          }
-        }
-      }),
+      onClicked: (_controlsConfiguration.disablePrev
+          ? null
+          : () {
+              for (final Function(BetterPlayerEvent)? eventListener
+                  in betterPlayerController!.eventListeners) {
+                if (eventListener != null) {
+                  eventListener(
+                      BetterPlayerEvent((BetterPlayerEventType.onPrev)));
+                }
+              }
+            }),
     );
   }
 
@@ -428,16 +452,20 @@ class _BetterPlayerMaterialControlsState
         _controlsConfiguration.skipForwardIcon,
         size: 32,
         color: _controlsConfiguration.disableNext
-          ? Colors.grey[400]
-          : _controlsConfiguration.iconsColor,
+            ? Colors.grey[400]
+            : _controlsConfiguration.iconsColor,
       ),
-      onClicked: (_controlsConfiguration.disableNext ? null : () {
-        for (final Function(BetterPlayerEvent)? eventListener in betterPlayerController!.eventListeners) {
-          if (eventListener != null) {
-            eventListener(BetterPlayerEvent((BetterPlayerEventType.onNext)));
-          }
-        }
-      }),
+      onClicked: (_controlsConfiguration.disableNext
+          ? null
+          : () {
+              for (final Function(BetterPlayerEvent)? eventListener
+                  in betterPlayerController!.eventListeners) {
+                if (eventListener != null) {
+                  eventListener(
+                      BetterPlayerEvent((BetterPlayerEventType.onNext)));
+                }
+              }
+            }),
     );
   }
 
@@ -447,11 +475,8 @@ class _BetterPlayerMaterialControlsState
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (_controlsConfiguration.enableNextPrev)
-            _buildCustomPrevWidget(),
-          if (_controlsConfiguration.enableNextPrev)
-            Spacer(),
-
+          if (_controlsConfiguration.enableNextPrev) _buildCustomPrevWidget(),
+          if (_controlsConfiguration.enableNextPrev) Spacer(),
           if (_controlsConfiguration.enableSkips)
             _buildSkipButton()
           else
@@ -461,11 +486,8 @@ class _BetterPlayerMaterialControlsState
             _buildForwardButton()
           else
             const SizedBox(),
-            
-          if (_controlsConfiguration.enableNextPrev)
-            Spacer(),
-          if (_controlsConfiguration.enableNextPrev)
-            _buildCustomNextWidget(),
+          if (_controlsConfiguration.enableNextPrev) Spacer(),
+          if (_controlsConfiguration.enableNextPrev) _buildCustomNextWidget(),
         ],
       ),
     );

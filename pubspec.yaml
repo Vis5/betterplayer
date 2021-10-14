@@ -31,6 +31,12 @@ dev_dependencies:
     sdk: flutter
 
 flutter:
+  assets:
+    - assets/autopause.png
+    - assets/autoplay.png
+    - autopause.png
+    - autoplay.png
+
   plugin:
     platforms:
       android:

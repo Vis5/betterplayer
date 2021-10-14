@@ -121,6 +121,11 @@ abstract class VideoPlayerPlatform {
         'continueNotification() has not been implemented.');
   }
 
+  Future<void> removeNotification(int? textureId) {
+    throw UnimplementedError(
+        'removeNotification() has not been implemented.');
+  }
+
   /// Sets the video speed to a range between 0.0 and 2.0
   Future<void> setSpeed(int? textureId, double speed) {
     throw UnimplementedError('setSpeed() has not been implemented.');
