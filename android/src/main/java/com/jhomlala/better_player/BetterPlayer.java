@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -112,6 +113,9 @@ final class BetterPlayer {
     private WorkManager workManager;
     private HashMap<UUID, Observer<WorkInfo>> workerObserverMap;
     private CustomDefaultLoadControl customDefaultLoadControl;
+
+    private AudioManager am;
+    private AudioManager.OnAudioFocusChangeListener afChangeListener;
 
 
     BetterPlayer(
@@ -332,12 +336,47 @@ final class BetterPlayer {
         playerNotificationManager.setPlayer(exoPlayer);
         playerNotificationManager.setUseNextAction(false);
         playerNotificationManager.setUsePreviousAction(false);
+        playerNotificationManager.setUseNextActionInCompactView(false);
+        playerNotificationManager.setUseNavigationActions(false);
         playerNotificationManager.setUseStopAction(false);
 
 
         MediaSessionCompat mediaSession = setupMediaSession(context, false);
         playerNotificationManager.setMediaSessionToken(mediaSession.getSessionToken());
 
+        // Custom manager
+        am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+
+        // Request focus for music stream and pass AudioManager.OnAudioFocusChangeListener
+        // implementation reference
+        afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+            @Override
+            public void onAudioFocusChange(int focusChange) {
+                if(focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+                {
+                    // Pause
+                    // exoPlayer.pause();
+                    pause();
+                }
+                else if(focusChange == AudioManager.AUDIOFOCUS_GAIN)
+                {
+                    // Resume
+                    // exoPlayer.play();
+                    play();
+                }
+                else if(focusChange == AudioManager.AUDIOFOCUS_LOSS)
+                {
+                    // Stop or pause depending on your need
+                    // exoPlayer.pause();
+                    pause();
+                }
+                else if(focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+                {
+                    // ... pausing or ducking depends on your app
+                }
+            }
+        };
+        int result = am.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
         playerNotificationManager.setControlDispatcher(setupControlDispatcher());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -349,6 +388,7 @@ final class BetterPlayer {
                             .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
                             .setState(PlaybackStateCompat.STATE_PAUSED, getPosition(), 1.0f)
                             .build();
+                    am.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
                 } else {
                     playbackState = new PlaybackStateCompat.Builder()
                             .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
@@ -465,6 +505,10 @@ final class BetterPlayer {
         }
         if (playerNotificationManager != null) {
             playerNotificationManager.setPlayer(null);
+        }
+        if (am != null) {
+          am.abandonAudioFocus(afChangeListener);
+          am = null;
         }
         bitmap = null;
     }

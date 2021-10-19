@@ -216,12 +216,12 @@ class BetterPlayerController {
   ///Custom auto play
   bool autoPlay = false;
 
-  BetterPlayerController(
-    this.betterPlayerConfiguration, {
-    this.betterPlayerPlaylistConfiguration,
-    BetterPlayerDataSource? betterPlayerDataSource,
-    bool? autoPlay
-  }) {
+  bool _showNotificiation = false;
+
+  BetterPlayerController(this.betterPlayerConfiguration,
+      {this.betterPlayerPlaylistConfiguration,
+      BetterPlayerDataSource? betterPlayerDataSource,
+      bool? autoPlay}) {
     _eventListeners.add(eventListener);
     if (betterPlayerDataSource != null) {
       setupDataSource(betterPlayerDataSource);
@@ -691,6 +691,7 @@ class BetterPlayerController {
       BetterPlayerUtils.log("The data source has not been initialized");
       return;
     }
+    _showNotificiation = true;
     await videoPlayerController!.continueNotification();
   }
 
@@ -699,6 +700,7 @@ class BetterPlayerController {
       BetterPlayerUtils.log("The data source has not been initialized");
       return;
     }
+    _showNotificiation = false;
     await videoPlayerController!.removeNotification();
   }
 
@@ -911,7 +913,7 @@ class BetterPlayerController {
   bool _isAutomaticPlayPauseHandled() {
     return !(_betterPlayerDataSource
                 ?.notificationConfiguration?.showNotification ==
-            true) &&
+            true || _showNotificiation) &&
         betterPlayerConfiguration.handleLifecycle;
   }
 

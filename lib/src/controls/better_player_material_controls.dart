@@ -291,12 +291,15 @@ class _BetterPlayerMaterialControlsState
     return Switch(
       value: betterPlayerController!.autoPlay,
       activeColor: betterPlayerController!.betterPlayerConfiguration.controlsConfiguration.progressBarPlayedColor,
+      inactiveTrackColor: Colors.white12,
       /*inactiveThumbImage: Image.asset("autopause.png",
               width: 5, height: 5, fit: BoxFit.fitWidth)
           .image,
       activeThumbImage: Image.asset("autoplay.png", width: 5).image,*/
       onChanged: (val) async {
-        betterPlayerController!.autoPlay = val;
+        setState(() {
+          betterPlayerController!.autoPlay = val;
+        });
         for (final Function(BetterPlayerEvent)? eventListener
             in betterPlayerController!.eventListeners) {
           if (eventListener != null) {
