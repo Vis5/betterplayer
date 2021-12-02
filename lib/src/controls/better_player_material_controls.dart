@@ -217,10 +217,8 @@ class _BetterPlayerMaterialControlsState
         ),
       ),
       Spacer(),
-      if (_controlsConfiguration.enablePip)
-        _buildPipButtonWrapperWidget(_hideStuff, _onPlayerHide)
-      else
-        const SizedBox(),
+      _buildPipButtonWrapperWidget(_hideStuff, _onPlayerHide),
+      const SizedBox(),
       if (_controlsConfiguration.enableOverflowMenu)
         AnimatedOpacity(
           opacity: _hideStuff ? 0.0 : 1.0,
@@ -263,26 +261,24 @@ class _BetterPlayerMaterialControlsState
       future: betterPlayerController!.isPictureInPictureSupported(),
       builder: (context, snapshot) {
         final bool isPipSupported = snapshot.data ?? false;
-        if (isPipSupported &&
-            _betterPlayerController!.betterPlayerGlobalKey != null) {
-          return AnimatedOpacity(
-            opacity: hideStuff ? 0.0 : 1.0,
-            duration: betterPlayerControlsConfiguration.controlsHideTime,
-            onEnd: onPlayerHide,
-            child: Container(
-              height: betterPlayerControlsConfiguration.controlBarHeight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _buildAutoPlay(),
+        return AnimatedOpacity(
+          opacity: hideStuff ? 0.0 : 1.0,
+          duration: betterPlayerControlsConfiguration.controlsHideTime,
+          onEnd: onPlayerHide,
+          child: Container(
+            height: betterPlayerControlsConfiguration.controlBarHeight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _buildAutoPlay(),
+                if (isPipSupported &&
+                  _betterPlayerController!.betterPlayerGlobalKey != null &&
+                  _controlsConfiguration.enablePip)
                   _buildPipButton(),
-                ],
-              ),
+              ],
             ),
-          );
-        } else {
-          return const SizedBox();
-        }
+          ),
+        );
       },
     );
   }
@@ -292,10 +288,8 @@ class _BetterPlayerMaterialControlsState
       value: betterPlayerController!.autoPlay,
       activeColor: betterPlayerController!.betterPlayerConfiguration.controlsConfiguration.progressBarPlayedColor,
       inactiveTrackColor: Colors.white12,
-      /*inactiveThumbImage: Image.asset("autopause.png",
-              width: 5, height: 5, fit: BoxFit.fitWidth)
-          .image,
-      activeThumbImage: Image.asset("autoplay.png", width: 5).image,*/
+      inactiveThumbImage: betterPlayerController!.betterPlayerConfiguration.controlsConfiguration.autopauseImage,
+      activeThumbImage: betterPlayerController!.betterPlayerConfiguration.controlsConfiguration.autoplayImage,
       onChanged: (val) async {
         setState(() {
           betterPlayerController!.autoPlay = val;

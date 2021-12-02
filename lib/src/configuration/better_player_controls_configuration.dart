@@ -170,11 +170,13 @@ class BetterPlayerControlsConfiguration {
 
   ///Used on Dccast Options
   final bool enableOptions;
-  
+
   ///Used on Dccast VOD
   final bool enableNextPrev;
   final bool disablePrev;
   final bool disableNext;
+  final ImageProvider? autoplayImage;
+  final ImageProvider? autopauseImage;
 
   const BetterPlayerControlsConfiguration(
       {this.controlBarColor = Colors.black87,
@@ -231,7 +233,9 @@ class BetterPlayerControlsConfiguration {
       this.enableOptions = false,
       this.enableNextPrev = false,
       this.disablePrev = false,
-      this.disableNext = false});
+      this.disableNext = false,
+      this.autoplayImage,
+      this.autopauseImage});
 
   factory BetterPlayerControlsConfiguration.white() {
     return const BetterPlayerControlsConfiguration(
