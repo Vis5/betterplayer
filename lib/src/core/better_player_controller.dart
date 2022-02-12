@@ -912,8 +912,9 @@ class BetterPlayerController {
   ///Check if player can be played/paused automatically
   bool _isAutomaticPlayPauseHandled() {
     return !(_betterPlayerDataSource
-                ?.notificationConfiguration?.showNotification ==
-            true || _showNotificiation) &&
+                    ?.notificationConfiguration?.showNotification ==
+                true ||
+            _showNotificiation) &&
         betterPlayerConfiguration.handleLifecycle;
   }
 
@@ -937,7 +938,9 @@ class BetterPlayerController {
       } else {
         if (visibilityFraction == 0) {
           _wasPlayingBeforePause ??= isPlaying();
-          pause();
+          if (!(_betterPlayerDataSource?.liveStream ?? false)) {
+            pause();
+          }
         } else {
           if (_wasPlayingBeforePause == true && !isPlaying()!) {
             play();
