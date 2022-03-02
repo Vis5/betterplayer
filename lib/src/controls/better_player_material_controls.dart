@@ -425,11 +425,11 @@ class _BetterPlayerMaterialControlsState
       icon: Icon(
         _controlsConfiguration.skipBackIcon,
         size: 32,
-        color: _controlsConfiguration.disablePrev
+        color: (betterPlayerController?.disablePrev ?? false)
             ? Colors.grey[400]
             : _controlsConfiguration.iconsColor,
       ),
-      onClicked: (_controlsConfiguration.disablePrev
+      onClicked: (betterPlayerController?.disablePrev ?? false
           ? null
           : () {
               for (final Function(BetterPlayerEvent)? eventListener
@@ -448,11 +448,11 @@ class _BetterPlayerMaterialControlsState
       icon: Icon(
         _controlsConfiguration.skipForwardIcon,
         size: 32,
-        color: _controlsConfiguration.disableNext
+        color: betterPlayerController?.disableNext ?? false
             ? Colors.grey[400]
             : _controlsConfiguration.iconsColor,
       ),
-      onClicked: (_controlsConfiguration.disableNext
+      onClicked: (betterPlayerController?.disableNext ?? false
           ? null
           : () {
               for (final Function(BetterPlayerEvent)? eventListener
@@ -625,6 +625,7 @@ class _BetterPlayerMaterialControlsState
                   ? _controlsConfiguration.muteIcon
                   : _controlsConfiguration.unMuteIcon,
               color: _controlsConfiguration.iconsColor,
+              size: 15,
             ),
           ),
         ),

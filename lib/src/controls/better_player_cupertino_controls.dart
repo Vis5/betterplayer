@@ -376,6 +376,7 @@ class _BetterPlayerCupertinoControlsState
                       ? _controlsConfiguration.muteIcon
                       : _controlsConfiguration.unMuteIcon,
                   color: iconColor,
+                  size: 15,
                 ),
               ),
             ),

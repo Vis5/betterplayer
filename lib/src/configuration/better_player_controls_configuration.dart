@@ -173,8 +173,6 @@ class BetterPlayerControlsConfiguration {
 
   ///Used on Dccast VOD
   final bool enableNextPrev;
-  final bool disablePrev;
-  final bool disableNext;
   final ImageProvider? autoplayImage;
   final ImageProvider? autopauseImage;
 
@@ -232,8 +230,6 @@ class BetterPlayerControlsConfiguration {
       this.overflowModalTextColor = Colors.black,
       this.enableOptions = false,
       this.enableNextPrev = false,
-      this.disablePrev = false,
-      this.disableNext = false,
       this.autoplayImage,
       this.autopauseImage});
 

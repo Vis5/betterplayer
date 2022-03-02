@@ -225,11 +225,11 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         case VideoEventType.initialized:
           // If in hard-portrait mode, forcefully switch which dimension is higher to be the height
           var dim = event.size;
-          if (_isPortrait && dim != null) {
+          /*if (_isPortrait && dim != null) {
             if (dim.width > dim.height) {
               dim = Size(dim.height, dim.width);
             }
-          }
+          }*/
           value = value.copyWith(
             duration: event.duration,
             size: dim,
@@ -292,8 +292,20 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   void setIsPortrait(bool val) {
+    print("hey hey setting $val");
     _isPortrait = val;
+    /*if (_isPortrait && value.size != null) {
+      if ((value.size?.width ?? 0) > (value.size?.height ?? 0)) {
+        value = value.copyWith(
+          size: Size(value.size?.height ?? 0, value.size?.width ?? 0)
+        );
+        _initializingCompleter.complete(null);
+        _applyPlayPause();
+      }
+    }*/
   }
+
+  bool get isPortrait => _isPortrait;
 
   /// Set data source for playing a video from an asset.
   ///
@@ -620,7 +632,11 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   Future<void> enablePictureInPicture(
-      {double? top, double? left, double? width, double? height, bool? showPipAction}) async {
+      {double? top,
+      double? left,
+      double? width,
+      double? height,
+      bool? showPipAction}) async {
     await _videoPlayerPlatform.enablePictureInPicture(
         textureId, top, left, width, height, showPipAction);
   }

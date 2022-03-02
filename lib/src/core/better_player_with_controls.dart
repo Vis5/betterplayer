@@ -88,9 +88,10 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
             betterPlayerController.videoPlayerController?.value.aspectRatio ??
                 1.0;
       } else {
-        aspectRatio = betterPlayerController
+        aspectRatio = betterPlayerController.overridenAspectRatio() ??
+            (betterPlayerController
                 .betterPlayerConfiguration.fullScreenAspectRatio ??
-            BetterPlayerUtils.calculateAspectRatio(context);
+            BetterPlayerUtils.calculateAspectRatio(context));
       }
     } else {
       aspectRatio = betterPlayerController.getAspectRatio();
@@ -114,7 +115,8 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
   Container _buildPlayerWithControls(
       BetterPlayerController betterPlayerController, BuildContext context) {
     final configuration = betterPlayerController.betterPlayerConfiguration;
-    var rotation = configuration.rotation;
+    var rotation =
+        betterPlayerController.overridenRotation ?? configuration.rotation;
 
     if (!(rotation <= 360 && rotation % 90 == 0)) {
       BetterPlayerUtils.log("Invalid rotation provided. Using rotation = 0");
@@ -134,11 +136,10 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
         children: <Widget>[
           if (placeholderOnTop) _buildPlaceholder(betterPlayerController),
           _BetterPlayerVideoFitWidget(
-            betterPlayerController,
-            betterPlayerController.betterPlayerConfiguration.fit,
-            betterPlayerController.betterPlayerConfiguration.fullScreenFit,
-            rotation ~/ 90
-          ),
+              betterPlayerController,
+              betterPlayerController.betterPlayerConfiguration.fit,
+              betterPlayerController.betterPlayerConfiguration.fullScreenFit,
+              rotation ~/ 90),
           betterPlayerController.betterPlayerConfiguration.overlay ??
               Container(),
           BetterPlayerSubtitlesDrawer(
@@ -311,11 +312,18 @@ class _BetterPlayerVideoFitWidgetState
             height: double.infinity,
             child: FittedBox(
               fit: widget.betterPlayerController.isFullScreen
-                  ? widget.boxFullscreenFit
+                  ? widget.betterPlayerController.overridenFullscreenFit ?? 
+                    (controller!.isPortrait
+                      ? BoxFit.fitHeight
+                      : BoxFit.fitWidth)
                   : widget.boxFit,
               child: SizedBox(
-                width: controller!.value.size?.width ?? 0,
-                height: controller!.value.size?.height ?? 0,
+                width: controller!.isPortrait
+                    ? controller!.value.size?.height ?? 0
+                    : controller!.value.size?.width ?? 0,
+                height: controller!.isPortrait
+                    ? controller!.value.size?.width ?? 0
+                    : controller!.value.size?.height ?? 0,
                 child: RotatedBox(
                   quarterTurns: widget.quarterTurns,
                   child: VideoPlayer(controller),

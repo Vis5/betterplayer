@@ -153,7 +153,13 @@ class BetterPlayerController {
 
   ///Overridden aspect ratio which will be used instead of aspect ratio passed
   ///in configuration.
+  /// Makes non-final field overridable
   double? _overriddenAspectRatio;
+  double? overridenRotation;
+  bool? overridenIsPortrait;
+  BoxFit? overridenFullscreenFit;
+  bool? disablePrev;
+  bool? disableNext;
 
   ///Was Picture in Picture opened.
   bool _wasInPipMode = false;
@@ -255,10 +261,10 @@ class BetterPlayerController {
       videoPlayerController = VideoPlayerController(
           bufferingConfiguration:
               betterPlayerDataSource.bufferingConfiguration);
-      videoPlayerController
-          ?.setIsPortrait(this.betterPlayerConfiguration.isPortrait);
       videoPlayerController?.addListener(_onVideoPlayerChanged);
     }
+    videoPlayerController?.setIsPortrait(
+          overridenIsPortrait ?? this.betterPlayerConfiguration.isPortrait);
 
     ///Clear asms tracks
     betterPlayerAsmsTracks.clear();
@@ -1036,6 +1042,8 @@ class BetterPlayerController {
   double? getAspectRatio() {
     return _overriddenAspectRatio ?? betterPlayerConfiguration.aspectRatio;
   }
+
+  double? overridenAspectRatio() => _overriddenAspectRatio;
 
   ///Enable Picture in Picture (PiP) mode. [betterPlayerGlobalKey] is required
   ///to open PiP mode in iOS. When device is not supported, PiP mode won't be
