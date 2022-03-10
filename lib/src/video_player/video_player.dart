@@ -294,15 +294,6 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   void setIsPortrait(bool val) {
     print("hey hey setting $val");
     _isPortrait = val;
-    /*if (_isPortrait && value.size != null) {
-      if ((value.size?.width ?? 0) > (value.size?.height ?? 0)) {
-        value = value.copyWith(
-          size: Size(value.size?.height ?? 0, value.size?.width ?? 0)
-        );
-        _initializingCompleter.complete(null);
-        _applyPlayPause();
-      }
-    }*/
   }
 
   bool get isPortrait => _isPortrait;

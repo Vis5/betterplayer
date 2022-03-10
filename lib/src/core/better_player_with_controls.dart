@@ -318,10 +318,14 @@ class _BetterPlayerVideoFitWidgetState
                       : BoxFit.fitWidth)
                   : widget.boxFit,
               child: SizedBox(
-                width: controller!.isPortrait
+                width: controller!.isPortrait &&
+                  (controller!.value.size?.width ?? 0) > 
+                  (controller!.value.size?.height ?? 0)
                     ? controller!.value.size?.height ?? 0
                     : controller!.value.size?.width ?? 0,
-                height: controller!.isPortrait
+                height: controller!.isPortrait &&
+                  (controller!.value.size?.width ?? 0) > 
+                  (controller!.value.size?.height ?? 0)
                     ? controller!.value.size?.width ?? 0
                     : controller!.value.size?.height ?? 0,
                 child: RotatedBox(
