@@ -1,4 +1,4 @@
-package com.jhomlala.better_player;
+/*package com.jhomlala.better_player;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -29,6 +29,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ControlDispatcher;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -41,9 +42,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
-import com.google.android.exoplayer2.drm.DefaultDrmSessionManagerProvider;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
-import com.google.android.exoplayer2.drm.DrmSessionManagerProvider;
 import com.google.android.exoplayer2.drm.DummyExoMediaDrm;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
 import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
@@ -110,7 +109,7 @@ final class BetterPlayer {
     private ExoPlayer.Listener exoPlayerEventListener;
     private Bitmap bitmap;
     private MediaSessionCompat mediaSession;
-    private DrmSessionManagerProvider drmSessionManager;
+    private DrmSessionManager drmSessionManager;
     private WorkManager workManager;
     private HashMap<UUID, Observer<WorkInfo>> workerObserverMap;
     private CustomDefaultLoadControl customDefaultLoadControl;
@@ -178,8 +177,8 @@ final class BetterPlayer {
             } else {
                 UUID drmSchemeUuid = Util.getDrmUuid("widevine");
                 if (drmSchemeUuid != null) {
-                    /*drmSessionManager =
-                            new DefaultDrmSessionManagerProvider.Builder()
+                    drmSessionManager =
+                            new DefaultDrmSessionManager.Builder()
                                     .setUuidAndExoMediaDrmProvider(drmSchemeUuid,
                                             uuid -> {
                                                 try {
@@ -192,7 +191,7 @@ final class BetterPlayer {
                                                 }
                                             })
                                     .setMultiSession(false)
-                                    .build(httpMediaDrmCallback);*/
+                                    .build(httpMediaDrmCallback);
                 }
             }
         } else {
@@ -338,7 +337,7 @@ final class BetterPlayer {
         playerNotificationManager.setUseNextAction(false);
         playerNotificationManager.setUsePreviousAction(false);
         playerNotificationManager.setUseNextActionInCompactView(false);
-        playerNotificationManager.setUsePreviousActionInCompactView(false);
+        playerNotificationManager.setUseNavigationActions(false);
         playerNotificationManager.setUseStopAction(false);
 
 
@@ -379,7 +378,7 @@ final class BetterPlayer {
         };
         int result = am.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
-//        playerNotificationManager.setControlDispatcher(setupControlDispatcher());
+        playerNotificationManager.setControlDispatcher(setupControlDispatcher());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             refreshHandler = new Handler();
             refreshRunnable = () -> {
@@ -416,7 +415,7 @@ final class BetterPlayer {
         // exoPlayer.seekTo(0);
     }
 
-/*
+
     private ControlDispatcher setupControlDispatcher() {
         return new ControlDispatcher() {
             @Override
@@ -493,7 +492,7 @@ final class BetterPlayer {
             }
         };
     }
-*/
+
 
     public void disposeRemoteNotifications() {
         if (exoPlayerEventListener != null) {
@@ -556,22 +555,22 @@ final class BetterPlayer {
                 return new SsMediaSource.Factory(
                         new DefaultSsChunkSource.Factory(mediaDataSourceFactory),
                         new DefaultDataSourceFactory(context, null, mediaDataSourceFactory))
-//                        .setDrmSessionManagerProvider(drmSessionManager)
+                        .setDrmSessionManager(drmSessionManager)
                         .createMediaSource(mediaItem);
             case C.TYPE_DASH:
                 return new DashMediaSource.Factory(
                         new DefaultDashChunkSource.Factory(mediaDataSourceFactory),
                         new DefaultDataSourceFactory(context, null, mediaDataSourceFactory))
-//                        .setDrmSessionManagerProvider(drmSessionManager)
+                        .setDrmSessionManager(drmSessionManager)
                         .createMediaSource(mediaItem);
             case C.TYPE_HLS:
                 return new HlsMediaSource.Factory(mediaDataSourceFactory)
-//                        .setDrmSessionManagerProvider(drmSessionManager)
+                        .setDrmSessionManager(drmSessionManager)
                         .createMediaSource(mediaItem);
             case C.TYPE_OTHER:
                 return new ProgressiveMediaSource.Factory(mediaDataSourceFactory,
                         new DefaultExtractorsFactory())
-//                        .setDrmSessionManagerProvider(drmSessionManager)
+                        .setDrmSessionManager(drmSessionManager)
                         .createMediaSource(mediaItem);
             default: {
                 throw new IllegalStateException("Unsupported type: " + type);
@@ -625,8 +624,8 @@ final class BetterPlayer {
                 }
             }
 
-//            @Override
-            public void onPlayerErrorChanged(final ExoPlaybackException error) {
+            @Override
+            public void onPlayerError(final ExoPlaybackException error) {
                 eventSink.error("VideoError", "Video player had error " + error, null);
             }
         });
@@ -764,7 +763,7 @@ final class BetterPlayer {
         MediaSessionConnector mediaSessionConnector =
                 new MediaSessionConnector(mediaSession);
         if (setupControlDispatcher) {
-//            mediaSessionConnector.setControlDispatcher(setupControlDispatcher());
+            mediaSessionConnector.setControlDispatcher(setupControlDispatcher());
         }
         mediaSessionConnector.setPlayer(exoPlayer);
 
@@ -982,3 +981,4 @@ final class BetterPlayer {
 
 
 
+*/
