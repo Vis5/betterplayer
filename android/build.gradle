@@ -22,7 +22,7 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 31
 
     defaultConfig {
         minSdkVersion 16
@@ -50,7 +50,7 @@ android {
         implementation "android.arch.lifecycle:common-java8:1.1.1"
         implementation 'androidx.annotation:annotation:1.1.0'
         implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-        implementation "androidx.work:work-runtime:2.5.0"
+        implementation "androidx.work:work-runtime:2.7.1"
     }
 }
 

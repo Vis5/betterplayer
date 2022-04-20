@@ -565,7 +565,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                 flutterState.applicationContext,
                 pp,
                 new Intent(ACTION_MEDIA_CONTROL).putExtra(EXTRA_CONTROL_TYPE, pp),
-                0);
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0);
         final Icon iconPlay = Icon.createWithResource(activity, R.drawable.ic_play_player);
         final Icon iconPause = Icon.createWithResource(activity, R.drawable.ic_pause_player);
         if (showActions) {

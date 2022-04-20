@@ -246,7 +246,7 @@ final class BetterPlayer {
                 notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                         | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 return PendingIntent.getActivity(context, 0,
-                        notificationIntent, 0);
+                        notificationIntent, Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0);
             }
 
             @Nullable
@@ -770,7 +770,7 @@ final class BetterPlayer {
 
         Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
         mediaButtonIntent.setClass(context, MediaButtonReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, mediaButtonIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, mediaButtonIntent,  Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0);
         mediaSession.setMediaButtonReceiver(pendingIntent);
 
 
