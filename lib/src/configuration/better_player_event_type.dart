@@ -11,7 +11,8 @@ enum BetterPlayerEventType {
   finished,
   exception,
   controlsVisible,
-  controlsHidden,
+  controlsHiddenStart,
+  controlsHiddenEnd,
   setSpeed,
   changedSubtitles,
   changedTrack,
@@ -23,9 +24,10 @@ enum BetterPlayerEventType {
   bufferingStart,
   bufferingUpdate,
   bufferingEnd,
+  changedPlaylistItem,
   // custom
   onOptions,
   onPrev,
   onNext,
-  onAutoPlay
+  onAutoPlay,
 }

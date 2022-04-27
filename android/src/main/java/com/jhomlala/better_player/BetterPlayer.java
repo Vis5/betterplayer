@@ -1,4 +1,4 @@
-package com.jhomlala.better_player;
+/*package com.jhomlala.better_player;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -192,7 +192,7 @@ final class BetterPlayer {
                                                 }
                                             })
                                     .setMultiSession(false)
-                                    .build(httpMediaDrmCallback);*/
+                                    .build(httpMediaDrmCallback);*
                 }
             }
         } else {
@@ -493,7 +493,7 @@ final class BetterPlayer {
             }
         };
     }
-*/
+*
 
     public void disposeRemoteNotifications() {
         if (exoPlayerEventListener != null) {
@@ -979,6 +979,4 @@ final class BetterPlayer {
     }
 
 }
-
-
-
+*/

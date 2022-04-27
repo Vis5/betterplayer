@@ -1,4 +1,4 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+/*// Copyright 2017 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -40,9 +40,6 @@ import android.graphics.drawable.Icon;
 import androidx.media.session.MediaButtonReceiver;
 import android.content.BroadcastReceiver;
 
-/**
- * Android platform implementation of the VideoPlayerPlugin.
- */
 public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodCallHandler {
     private static final String TAG = "BetterPlayerPlugin";
     private static final String CHANNEL = "better_player_channel";
@@ -115,7 +112,6 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
     private static final String CONTINUE_NOTIFICATION_METHOD = "continueNotification";
     private static final String REMOVE_NOTIFICATION_METHOD = "removeNotification";
 
-    /** Intent extra for media controls from Picture-in-Picture mode. */
     private static final String ACTION_MEDIA_CONTROL = "media_control";
     private static final String EXTRA_CONTROL_TYPE = "control_type";
 
@@ -373,12 +369,6 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
         }
     }
 
-    /**
-     * Start pre cache of video.
-     *
-     * @param call   - invoked method data
-     * @param result - result which should be updated
-     */
     private void preCache(MethodCall call, Result result) {
         Map<String, Object> dataSource = call.argument(DATA_SOURCE_PARAMETER);
         if (dataSource != null) {
@@ -404,12 +394,6 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
         }
     }
 
-    /**
-     * Stop pre cache video process (if exists).
-     *
-     * @param call   - invoked method data
-     * @param result - result which should be updated
-     */
     private void stopPreCache(MethodCall call, Result result) {
         String url = call.argument(URL_PARAMETER);
         BetterPlayer.stopPreCache(flutterState.applicationContext, url, result);
@@ -521,7 +505,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                 && activity.getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
     }
-
+------
     private final PictureInPictureParams.Builder mPictureInPictureParamsBuilder = new PictureInPictureParams.Builder();
     private boolean pipPaused = true;
 
@@ -669,3 +653,4 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
         }
     }
 }
+*/
