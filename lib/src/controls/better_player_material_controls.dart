@@ -470,28 +470,33 @@ class _BetterPlayerMaterialControlsState
   }
 
   Widget _buildMiddleRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: _betterPlayerController?.isLiveStream() == true
-          ? const SizedBox()
-          : Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          if (_controlsConfiguration.enableNextPrev) _buildCustomPrevWidget(),
-          if (_controlsConfiguration.enableNextPrev) Spacer(),
-          if (_controlsConfiguration.enableSkips)
-            _buildSkipButton()
-          else
-            const SizedBox(),
-          if (_betterPlayerController?.videoPlayerController != null)
-          _buildReplayButton(_betterPlayerController!.videoPlayerController!),
-          if (_controlsConfiguration.enableSkips)
-            _buildForwardButton()
-          else
-            const SizedBox(),
-          if (_controlsConfiguration.enableNextPrev) Spacer(),
-          if (_controlsConfiguration.enableNextPrev) _buildCustomNextWidget(),
-        ],
+    return Container(
+      color: _controlsConfiguration.controlBarColor,
+      width: double.infinity,
+      height: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: _betterPlayerController?.isLiveStream() == true
+            ? const SizedBox()
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (_controlsConfiguration.enableNextPrev) _buildCustomPrevWidget(),
+            if (_controlsConfiguration.enableNextPrev) Spacer(),
+            if (_controlsConfiguration.enableSkips)
+              _buildSkipButton()
+            else
+              const SizedBox(),
+            if (_betterPlayerController?.videoPlayerController != null)
+            _buildReplayButton(_betterPlayerController!.videoPlayerController!),
+            if (_controlsConfiguration.enableSkips)
+              _buildForwardButton()
+            else
+              const SizedBox(),
+            if (_controlsConfiguration.enableNextPrev) Spacer(),
+            if (_controlsConfiguration.enableNextPrev) _buildCustomNextWidget(),
+          ],
+        ),
       ),
     );
   }

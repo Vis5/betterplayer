@@ -4,14 +4,22 @@
 package com.jhomlala.better_player
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.app.PictureInPictureParams
+import android.app.RemoteAction
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.util.LongSparseArray
+import android.util.Rational
+import androidx.annotation.RequiresApi
 import com.jhomlala.better_player.BetterPlayerCache.releaseCache
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -447,13 +455,77 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             .hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
     }
 
+    var pipPaused: Boolean = false;
+
     private fun enablePictureInPicture(player: BetterPlayer) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            player.setupMediaSession(flutterState!!.applicationContext)
-            activity!!.enterPictureInPictureMode(PictureInPictureParams.Builder().build())
+//            player.setupMediaSession(flutterState!!.applicationContext)
+            pipPaused = true;
+            updatePipButton(player, 0, true, true);
+
+            startPictureInPictureListenerTimer(player);
+            player.onPictureInPictureStatusChanged(true);
+
+            val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent?) {
+                    if (intent == null
+                        || !ACTION_MEDIA_CONTROL.equals(intent.getAction())) {
+                        return;
+                    }
+
+                    var controlType = intent.getIntExtra(EXTRA_CONTROL_TYPE, 0);
+                    if (pipPaused) {
+                        setupNotification(player);
+                        player.play();
+                        pipPaused = false;
+                        updatePipButton(player, 1, false, true);
+                    } else {
+                        player.pause();
+                        pipPaused = true;
+                        updatePipButton(player, 0, false, true);
+                    }
+                }
+            };
+            flutterState?.applicationContext?.registerReceiver(mReceiver, IntentFilter(ACTION_MEDIA_CONTROL));
+
             startPictureInPictureListenerTimer(player)
             player.onPictureInPictureStatusChanged(true)
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun updatePipButton(player: BetterPlayer, pp: Int, first: Boolean, showActions: Boolean) {
+        val actions = ArrayList<RemoteAction>()
+        val intent = PendingIntent.getBroadcast(
+            flutterState!!.applicationContext,
+            pp,
+            Intent(ACTION_MEDIA_CONTROL).putExtra(EXTRA_CONTROL_TYPE, pp),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE } else {0}
+        );
+        val iconPlay = Icon.createWithResource(activity, R.drawable.ic_play_player);
+        val iconPause = Icon.createWithResource(activity, R.drawable.ic_pause_player);
+        if (showActions && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (pipPaused) {
+                actions.add(RemoteAction(iconPlay, "play", "play", intent))
+            } else {
+                actions.add(RemoteAction(iconPause, "pause", "pause", intent));
+            }
+        }
+
+        val aspectRatio = Rational(800, 450);
+
+        if (first) {
+            activity!!.enterPictureInPictureMode(PictureInPictureParams.Builder()
+                .setAspectRatio(aspectRatio)
+                .setActions(actions)
+                .build());
+        } else {
+            activity!!.setPictureInPictureParams(PictureInPictureParams.Builder()
+                .setAspectRatio(aspectRatio)
+                .setActions(actions)
+                .build());
+        }
+        player.onPictureInPictureStatusChanged(true);
     }
 
     private fun disablePictureInPicture(player: BetterPlayer) {
