@@ -483,7 +483,8 @@ class _BetterPlayerMaterialControlsState
             _buildSkipButton()
           else
             const SizedBox(),
-          _buildReplayButton(),
+          if (_betterPlayerController?.videoPlayerController != null)
+          _buildReplayButton(_betterPlayerController!.videoPlayerController!),
           if (_controlsConfiguration.enableSkips)
             _buildForwardButton()
           else

@@ -361,18 +361,18 @@ class _BetterPlayerCupertinoControlsState
           child: Container(
             decoration: BoxDecoration(
               color: backgroundColor,
-              child: Container(
-                height: barHeight,
-                padding: EdgeInsets.symmetric(
-                  horizontal: buttonPadding,
-                ),
-                child: Icon(
-                  (_latestValue != null && _latestValue!.volume > 0)
-                      ? _controlsConfiguration.muteIcon
-                      : _controlsConfiguration.unMuteIcon,
-                  color: iconColor,
-                  size: 15,
-                ),
+            ),
+            child: Container(
+              height: barHeight,
+              padding: EdgeInsets.symmetric(
+                horizontal: buttonPadding,
+              ),
+              child: Icon(
+                (_latestValue != null && _latestValue!.volume > 0)
+                    ? _controlsConfiguration.muteIcon
+                    : _controlsConfiguration.unMuteIcon,
+                color: iconColor,
+                size: 15,
               ),
             ),
           ),

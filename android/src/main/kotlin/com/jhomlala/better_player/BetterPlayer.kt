@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.AudioAttributes as AudioAttr
+import android.media.AudioFocusRequest
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -97,8 +99,8 @@ internal class BetterPlayer(
         customDefaultLoadControl ?: CustomDefaultLoadControl()
     private var lastSendBufferedPosition = 0L
 
-    private val am: AudioManager
-    private val afChangeListener: AudioManager.OnAudioFocusChangeListener 
+    private var audioManager: AudioManager? = null
+    lateinit var afChangeListener: AudioManager.OnAudioFocusChangeListener
 
     init {
         val loadBuilder = DefaultLoadControl.Builder()
@@ -332,9 +334,9 @@ internal class BetterPlayer(
         }
 
         // Audio Manager
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        private val handler = Handler()
-        private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager?
+        val handler = Handler()
+        afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
             when (focusChange) {
                 AudioManager.AUDIOFOCUS_LOSS -> {
                     // Permanent loss of audio focus
@@ -353,17 +355,17 @@ internal class BetterPlayer(
                 }
             }
         }
-        focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).run {
-            setAudioAttributes(AudioAttributes.Builder().run {
-                setUsage(AudioAttributes.USAGE_GAME)
-                setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).run {
+            setAudioAttributes(AudioAttr.Builder().run {
+                setUsage(AudioAttr.USAGE_GAME)
+                setContentType(AudioAttr.CONTENT_TYPE_MUSIC)
                 build()
             })
             setAcceptsDelayedFocusGain(true)
             setOnAudioFocusChangeListener(afChangeListener, handler)
             build()
         }        
-        val res = audioManager.requestAudioFocus(focusRequest)
+        val res = audioManager?.requestAudioFocus(focusRequest)
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -374,10 +376,10 @@ internal class BetterPlayer(
                         .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
                         .setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f)
                         .build()
-                        audioManager.requestAudioFocus(
+                    /*audioManager?.requestAudioFocus(
                           afChangeListener,
                           AudioManager.STREAM_MUSIC,
-                          AudioManager.AUDIOFOCUS_GAIN)
+                          AudioManager.AUDIOFOCUS_GAIN)*/
                 } else {
                     PlaybackStateCompat.Builder()
                         .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
@@ -417,7 +419,7 @@ internal class BetterPlayer(
             playerNotificationManager?.setPlayer(null)
         }
         bitmap = null
-        audioManager.abandonAudioFocus(afChangeListener)
+        audioManager?.abandonAudioFocus(afChangeListener)
     }
 
     private fun buildMediaSource(
