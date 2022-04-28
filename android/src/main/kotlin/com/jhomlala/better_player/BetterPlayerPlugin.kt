@@ -406,27 +406,20 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
           val textureId = getTextureId(betterPlayer)
           if (textureId != null) {
               val dataSource = dataSources[textureId]
-              //Don't setup notification for the same source.
-              if (textureId == currentNotificationTextureId && currentNotificationDataSource != null && dataSource != null && currentNotificationDataSource === dataSource) {
-                  return
-              }
               currentNotificationDataSource = dataSource
               currentNotificationTextureId = textureId
               removeOtherNotificationListeners()
-              val showNotification = getParameter(dataSource, SHOW_NOTIFICATION_PARAMETER, false)
-              if (showNotification) {
-                  val title = getParameter(dataSource, TITLE_PARAMETER, "")
-                  val author = getParameter(dataSource, AUTHOR_PARAMETER, "")
-                  val imageUrl = getParameter(dataSource, IMAGE_URL_PARAMETER, "")
-                  val notificationChannelName =
-                      getParameter<String?>(dataSource, NOTIFICATION_CHANNEL_NAME_PARAMETER, null)
-                  val activityName =
-                      getParameter(dataSource, ACTIVITY_NAME_PARAMETER, "MainActivity")
-                  betterPlayer.setupPlayerNotification(
-                      flutterState?.applicationContext!!,
-                      title, author, imageUrl, notificationChannelName, activityName
-                  )
-              }
+              val title = getParameter(dataSource, TITLE_PARAMETER, "")
+              val author = getParameter(dataSource, AUTHOR_PARAMETER, "")
+              val imageUrl = getParameter(dataSource, IMAGE_URL_PARAMETER, "")
+              val notificationChannelName =
+                  getParameter<String?>(dataSource, NOTIFICATION_CHANNEL_NAME_PARAMETER, null)
+              val activityName =
+                  getParameter(dataSource, ACTIVITY_NAME_PARAMETER, "MainActivity")
+              betterPlayer.setupPlayerNotification(
+                  flutterState?.applicationContext!!,
+                  title, author, imageUrl, notificationChannelName, activityName
+              )
           }
       } catch (exception: Exception) {
           Log.e(TAG, "SetupNotification failed", exception)
@@ -460,41 +453,41 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private fun enablePictureInPicture(player: BetterPlayer) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //            player.setupMediaSession(flutterState!!.applicationContext)
-            pipPaused = true;
-            updatePipButton(player, 0, true, true);
+            pipPaused = false
+            updatePipButton(player, 0, true)
 
-            startPictureInPictureListenerTimer(player);
-            player.onPictureInPictureStatusChanged(true);
+            startPictureInPictureListenerTimer(player)
+            player.onPictureInPictureStatusChanged(true)
 
             val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent?) {
-                    if (intent == null
-                        || !ACTION_MEDIA_CONTROL.equals(intent.getAction())) {
+                    if (intent == null || !ACTION_MEDIA_CONTROL.equals(intent.getAction())) {
                         return;
                     }
 
                     var controlType = intent.getIntExtra(EXTRA_CONTROL_TYPE, 0);
                     if (pipPaused) {
-                        setupNotification(player);
+                        setupNotification(player)
+//                        continueNotification(player)
                         player.play();
                         pipPaused = false;
-                        updatePipButton(player, 1, false, true);
+                        updatePipButton(player, 1, false);
                     } else {
                         player.pause();
                         pipPaused = true;
-                        updatePipButton(player, 0, false, true);
+                        updatePipButton(player, 0, false);
                     }
                 }
             };
             flutterState?.applicationContext?.registerReceiver(mReceiver, IntentFilter(ACTION_MEDIA_CONTROL));
 
-            startPictureInPictureListenerTimer(player)
-            player.onPictureInPictureStatusChanged(true)
+//            startPictureInPictureListenerTimer(player)
+//            player.onPictureInPictureStatusChanged(true)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun updatePipButton(player: BetterPlayer, pp: Int, first: Boolean, showActions: Boolean) {
+    private fun updatePipButton(player: BetterPlayer, pp: Int, first: Boolean) {
         val actions = ArrayList<RemoteAction>()
         val intent = PendingIntent.getBroadcast(
             flutterState!!.applicationContext,
@@ -504,7 +497,7 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         );
         val iconPlay = Icon.createWithResource(activity, R.drawable.ic_play_player);
         val iconPause = Icon.createWithResource(activity, R.drawable.ic_pause_player);
-        if (showActions && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (pipPaused) {
                 actions.add(RemoteAction(iconPlay, "play", "play", intent))
             } else {
