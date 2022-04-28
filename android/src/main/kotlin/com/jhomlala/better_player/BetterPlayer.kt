@@ -353,11 +353,17 @@ internal class BetterPlayer(
                     // Your app has been granted audio focus again
                     play()
                 }
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT -> {
+                    play()
+                }
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE -> {
+                    play()
+                }
             }
         }
         val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).run {
             setAudioAttributes(AudioAttr.Builder().run {
-                setUsage(AudioAttr.USAGE_GAME)
+                setUsage(AudioAttr.USAGE_MEDIA)
                 setContentType(AudioAttr.CONTENT_TYPE_MUSIC)
                 build()
             })
