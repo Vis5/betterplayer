@@ -113,7 +113,7 @@ class BetterPlayerController {
   Stream<int?> get nextVideoTimeStream => _nextVideoTimeStreamController.stream;
 
   ///Has player been disposed.
-  bool _disposed = false;
+  bool disposed = false;
 
   ///Was player playing before automatic pause.
   bool? _wasPlayingBeforePause;
@@ -378,7 +378,7 @@ class BetterPlayerController {
     }
 
     _postEvent(BetterPlayerEvent(BetterPlayerEventType.changedSubtitles));
-    if (!_disposed && !sourceInitialize) {
+    if (!disposed && !sourceInitialize) {
       _postControllerEvent(BetterPlayerControllerEvent.changeSubtitles);
     }
   }
@@ -960,7 +960,7 @@ class BetterPlayerController {
   /// then this logic will be ignored.
   void onPlayerVisibilityChanged(double visibilityFraction) async {
     _isPlayerVisible = visibilityFraction > 0;
-    if (_disposed) {
+    if (disposed) {
       return;
     }
     _postEvent(
@@ -1323,7 +1323,7 @@ class BetterPlayerController {
     if (!betterPlayerConfiguration.autoDispose && !forceDispose) {
       return;
     }
-    if (!_disposed) {
+    if (!disposed) {
       if (videoPlayerController != null) {
         pause();
         videoPlayerController!.removeListener(_onFullScreenStateChanged);
@@ -1335,7 +1335,7 @@ class BetterPlayerController {
       _nextVideoTimeStreamController.close();
       _controlsVisibilityStreamController.close();
       _videoEventStreamSubscription?.cancel();
-      _disposed = true;
+      disposed = true;
       _controllerEventStreamController.close();
 
       ///Delete files async

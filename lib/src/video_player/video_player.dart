@@ -218,11 +218,6 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         case VideoEventType.initialized:
           // If in hard-portrait mode, forcefully switch which dimension is higher to be the height
           var dim = event.size;
-          /*if (_isPortrait && dim != null) {
-            if (dim.width > dim.height) {
-              dim = Size(dim.height, dim.width);
-            }
-          }*/
           value = value.copyWith(
             duration: event.duration,
             size: dim,
