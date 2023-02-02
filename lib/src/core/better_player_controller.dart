@@ -783,9 +783,11 @@ class BetterPlayerController {
 
   ///Send player event to all listeners.
   void _postEvent(BetterPlayerEvent betterPlayerEvent) {
-    for (final Function(BetterPlayerEvent)? eventListener in _eventListeners) {
-      if (eventListener != null) {
-        eventListener(betterPlayerEvent);
+    if (_eventListeners.length > 0) {
+      for (final Function(BetterPlayerEvent)? eventListener in _eventListeners) {
+        if (eventListener != null) {
+          eventListener(betterPlayerEvent);
+        }
       }
     }
   }
