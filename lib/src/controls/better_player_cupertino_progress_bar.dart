@@ -175,7 +175,7 @@ class _VideoProgressBarState
   }
 
   void onFinishedLastSeek() {
-    if (shouldPlayAfterDragEnd) {
+    if (_controllerWasPlaying) {
       shouldPlayAfterDragEnd = false;
       betterPlayerController?.play();
     }
