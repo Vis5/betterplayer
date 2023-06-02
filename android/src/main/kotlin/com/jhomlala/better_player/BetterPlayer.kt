@@ -335,6 +335,7 @@ internal class BetterPlayer(
 
         // Audio Manager
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager?
+        audioManager?.setMode(AudioManager.MODE_NORMAL)
         val handler = Handler()
         afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
             when (focusChange) {
